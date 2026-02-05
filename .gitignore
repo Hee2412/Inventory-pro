@@ -1,0 +1,26 @@
+cat > .gitignore << 'EOF'
+# Environment
+.env
+
+# Build
+bin/
+tmp/
+*.exe
+*.exe~
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.log
+vendor/
+go.sum
+
+# Dependencies
+node_modules/
+EOF
