@@ -3,63 +3,51 @@ package main
 import (
 	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/database"
 	"fmt"
-
-	"log"
 )
 
 func main() {
-	// Load config
 	cfg := config.Load()
-
-	// Connect database
-	db, err := database.Connect(cfg.DatabaseURL)
+	db, _ := database.Connect(cfg.DatabaseURL)
+	err := db.AutoMigrate(&domain.User{})
 	if err != nil {
-		log.Fatal("❌ Failed to connect:", err)
+		return
 	}
 
-	fmt.Println("🔄 Migrating all models...")
+	productRepo := repository.NewProductRepository(db)
 
-	// Migrate tất cả models
-	err = db.AutoMigrate(
-		&domain.User{},
-		&domain.Product{},
-		&domain.AuditSession{},
-		&domain.StoreAuditReport{},
-		&domain.OrderSession{},
-		&domain.OrderSessionProducts{},
-		&domain.StoreOrders{},
-		&domain.OrderItems{},
-		&domain.SystemLogs{},
-		&domain.SystemSettings{},
-	)
+	product := &domain.Product{
+		ProductName: "Test Product",
+		Unit:        "Test Unit",
+		MOQ:         5,
+		OM:          5,
+		Type:        "Test Type",
+		OrderCycle:  "Test OrderCycle",
+		AuditCycle:  "Test AuditCycle",
+	}
 
+	err = productRepo.Create(product)
 	if err != nil {
-		log.Fatal("❌ Migration failed:", err)
+		fmt.Println("Create failed", err)
+		return
 	}
+	fmt.Printf("Product created with ID: %d\n", product.ID)
 
-	fmt.Println("✅ All models migrated successfully!")
+	fount, _ := productRepo.FindById(product.ID)
+	fmt.Printf("P found with ID: %d\n", fount.ID)
 
-	// List all tables
-	var tables []string
-	db.Raw(`
-		SELECT table_name 
-		FROM information_schema.tables 
-		WHERE table_schema = 'public' 
-		ORDER BY table_name
-	`).Scan(&tables)
+	found, _ := productRepo.FindByProductName(product.ProductName)
+	fmt.Printf("Product found with ProductName: %s\n", found.ProductName)
 
-	fmt.Println("\n Tables created:")
-	for i, table := range tables {
-		fmt.Printf("  %d. %s\n", i+1, table)
-	}
+	find, _ := productRepo.FindByProductCode(fount.ProductCode)
+	fmt.Printf("Product found with ProductCode: %s\n", find.ProductCode)
 
-	// Count records in each table
-	fmt.Println("\n Record counts:")
-	for _, table := range tables {
-		var count int64
-		db.Table(table).Count(&count)
-		fmt.Printf("  - %-30s: %d records\n", table, count)
-	}
+	fin, _ := productRepo.FindActiveProduct()
+	fmt.Printf("Actived product: %d/n", len(fin))
+
+	products, _ := productRepo.FindAll()
+	fmt.Printf("Products found with ID: %d\n", len(products))
+
 }
