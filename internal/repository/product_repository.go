@@ -12,14 +12,18 @@ type ProductRepository interface {
 	FindByProductCode(productCode string) (*domain.Product, error)
 	FindAll() ([]domain.Product, error)
 	Update(product *domain.Product) error
-	Delete(product *domain.Product) error
-	HardDelete(product *domain.Product) error
+	Delete(id uint) error
+	HardDelete(id uint) error
 
-	FindActiveProduct() ([]*domain.Product, error)
+	FindActiveProducts() ([]domain.Product, error)
 }
 
 type productRepository struct {
 	db *gorm.DB
+}
+
+func NewProductRepository(db *gorm.DB) ProductRepository {
+	return &productRepository{db: db}
 }
 
 func (p *productRepository) Create(product *domain.Product) error {
@@ -29,18 +33,27 @@ func (p *productRepository) Create(product *domain.Product) error {
 func (p *productRepository) FindById(id uint) (*domain.Product, error) {
 	var product domain.Product
 	err := p.db.First(&product, id).Error
-	return &product, err
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func (p *productRepository) FindByProductName(productName string) (*domain.Product, error) {
 	var product domain.Product
 	err := p.db.Where("product_name = ?", productName).First(&product).Error
-	return &product, err
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 func (p *productRepository) FindByProductCode(productCode string) (*domain.Product, error) {
 	var product domain.Product
 	err := p.db.Where("product_code = ?", productCode).First(&product).Error
-	return &product, err
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func (p *productRepository) FindAll() ([]domain.Product, error) {
@@ -53,20 +66,16 @@ func (p *productRepository) Update(product *domain.Product) error {
 	return p.db.Updates(product).Error
 }
 
-func (p *productRepository) Delete(product *domain.Product) error {
-	return p.db.Delete(product).Error
+func (p *productRepository) Delete(id uint) error {
+	return p.db.Delete(&domain.Product{}, id).Error
 }
 
-func (p *productRepository) HardDelete(product *domain.Product) error {
-	return p.db.Unscoped().Delete(product).Error
+func (p *productRepository) HardDelete(id uint) error {
+	return p.db.Unscoped().Delete(&domain.Product{}, id).Error
 }
 
-func (p *productRepository) FindActiveProduct() ([]*domain.Product, error) {
-	var product []*domain.Product
+func (p *productRepository) FindActiveProducts() ([]domain.Product, error) {
+	var product []domain.Product
 	err := p.db.Where("is_active = true", true).Find(&product).Error
 	return product, err
-}
-
-func NewProductRepository(db *gorm.DB) ProductRepository {
-	return &productRepository{db: db}
 }

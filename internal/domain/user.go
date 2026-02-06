@@ -12,7 +12,7 @@ type User struct {
 	Password  string `gorm:"not null;size:255" json:"-"`
 	Role      string `gorm:"not null;size:255" json:"role"`
 	StoreName string `gorm:"not null;size:255" json:"store_name"`
-	StoreCode string `gorm:"unique;not null;size:255" json:"store_code"`
+	StoreCode string `gorm:"unique;size:255" json:"store_code"`
 	IsActive  bool   `gorm:"default:true" json:"is_active"`
 
 	CreatedBy *uint          `json:"created_by,omitempty"`
@@ -27,16 +27,16 @@ func (User) TableName() string {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if u.Role == "store" && u.StoreCode == "" {
-
+	if u.Role == "user" && u.StoreCode == "" {
+		u.StoreCode = fmt.Sprintf("TEMP-%d", time.Now().UnixNano())
 	}
 	return nil
 }
 
 func (u *User) AfterCreate(tx *gorm.DB) (err error) {
-	if u.Role == "store" && u.StoreCode == "" {
-		storeCode := fmt.Sprintf("ST%06d", u.ID)
-		tx.Model(u).Update("store_code", storeCode)
+	if u.Role == "user" {
+		newCode := fmt.Sprintf("ST%06d", u.ID)
+		return tx.Model(u).Update("store_code", newCode).Error
 	}
 	return nil
 }

@@ -2,6 +2,10 @@ package main
 
 import (
 	"Inventory-pro/config"
+	"Inventory-pro/internal/handler"
+	"Inventory-pro/internal/middleware"
+	"Inventory-pro/internal/repository"
+	"Inventory-pro/internal/service"
 	"Inventory-pro/pkg/database"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -9,27 +13,34 @@ import (
 
 func main() {
 	cfg := config.Load()
-	log.Printf("Starting server in %s mode", cfg.Environment)
 
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal("False to connect database", err)
+		log.Fatal("Failed to connect database", err)
 	}
-	log.Printf("Connected to database successfully")
 
-	var result int
-	db.Raw("SELECT 1").Scan(&result)
-	log.Printf("Result: %d", result)
-
+	userRepo := repository.NewUserRepository(db)
+	authService := service.NewAuthService(userRepo, cfg)
+	authHandler := handler.NewAuthHandler(authService)
 	router := gin.Default()
 
-	router.GET("/heath", func(c *gin.Context) {
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":   "OK",
 			"database": "Connected",
 		})
 	})
 
+	mw := middleware.NewAuthMiddleware(cfg)
+	authRoutes := router.Group("/auth")
+	{
+		authRoutes.POST("/login", authHandler.Login)
+		authRoutes.POST("/register", mw.Handler(), authHandler.Register)
+	}
+
 	log.Printf("Server started on http://localhost:%s", cfg.Port)
-	router.Run(":" + cfg.Port)
+	err = router.Run(":" + cfg.Port)
+	if err != nil {
+		return
+	}
 }
