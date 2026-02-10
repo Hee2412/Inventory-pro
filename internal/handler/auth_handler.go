@@ -1,52 +1,47 @@
 package handler
 
 import (
+	"Inventory-pro/internal/dto"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type AuthHandler struct {
-	authServer service.AuthService
+	authService service.AuthService
 }
 
 func NewAuthHandler(authServer service.AuthService) *AuthHandler {
-	return &AuthHandler{authServer: authServer}
-}
-
-type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-type RegisterRequest struct {
-	Username  string `json:"username" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	Role      string `json:"role" binding:"required"`
-	StoreName string `json:"store_name" binding:"required"`
+	return &AuthHandler{authService: authServer}
 }
 
 func (handler *AuthHandler) Login(c *gin.Context) {
-	var req LoginRequest
+	var req dto.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
 		return
 	}
 
-	token, err := handler.authServer.Login(req.Username, req.Password)
+	token, user, err := handler.authService.Login(req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, dto.LoginResponse{
+		Token:     token,
+		ID:        user.ID,
+		Username:  user.Username,
+		Role:      user.Role,
+		StoreName: user.StoreName,
+		StoreCode: user.StoreCode,
+	})
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "login success",
-		"token":   token})
 }
 
 func (handler *AuthHandler) Register(c *gin.Context) {
-	var req RegisterRequest
+	var req dto.RegisterRequest
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
 		return
@@ -62,10 +57,39 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err := handler.authServer.Register(creatorRol, req.Username, req.Password, req.Role, req.StoreName)
+	err := handler.authService.Register(creatorRol, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "register success"})
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "register successfully",
+	})
+}
+
+func (handler *AuthHandler) GetProfile(c *gin.Context) {
+	userID, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+		return
+	}
+	floatID, ok := userID.(float64)
+	if !ok {
+		uID, okeUint := userID.(uint)
+		if !okeUint {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error format"})
+			return
+		}
+		floatID = float64(uID)
+	}
+	user, err := handler.authService.GetProfile(uint(floatID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Unfounded User"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"user":    user,
+	})
 }

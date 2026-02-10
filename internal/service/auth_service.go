@@ -3,6 +3,7 @@ package service
 import (
 	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/internal/dto"
 	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/jwt"
 	password2 "Inventory-pro/pkg/password"
@@ -10,8 +11,9 @@ import (
 )
 
 type AuthService interface {
-	Login(username string, password string) (string, error)
-	Register(creatorRole string, username string, password string, role string, storeName string) error
+	Login(username string, password string) (string, *domain.User, error)
+	Register(creatorRole string, req dto.RegisterRequest) error
+	GetProfile(userId uint) (*domain.User, error)
 }
 type authService struct {
 	repo repository.UserRepository
@@ -22,43 +24,65 @@ func NewAuthService(repo repository.UserRepository, cfg *config.Config) AuthServ
 	return &authService{repo: repo, cfg: cfg}
 }
 
-func (s *authService) Login(username string, password string) (string, error) {
+func (s *authService) Login(username string, password string) (string, *domain.User, error) {
 	user, err := s.repo.FindByUsername(username)
 	if err != nil {
-		return "", errors.New("user not found")
+		return "", nil, errors.New("user not found")
 	}
-
-	err = password2.ComparePassword(user.Password, password)
-	if err != nil {
-		return "", errors.New("invalid password")
+	if !user.IsActive {
+		return "", nil, errors.New("your account is inactive")
 	}
-
+	if !password2.ComparePassword(user.Password, password) {
+		return "", nil, errors.New("invalid username or password")
+	}
 	token, err := jwt.GenerateToken(user.ID, user.Role, s.cfg.JWTSecret, s.cfg.JWTExpires)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return token, nil
+	return token, user, nil
 }
 
-func (s *authService) Register(
-	creatorRole string,
-	username string,
-	password string,
-	storeName string,
-	role string) error {
-	if creatorRole != "superadmin" && creatorRole != "admin" {
+func (s *authService) Register(creatorRole string, req dto.RegisterRequest) error {
+	if existingUser, _ := s.repo.FindByUsername(req.Username); existingUser != nil {
+		return errors.New("user already exists")
+	}
+	hashedPassword, err := password2.HashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+	newUser := &domain.User{
+		Username: req.Username,
+		Password: hashedPassword,
+	}
+
+	switch req.Role {
+	case "admin":
+		if creatorRole != "super_admin" {
+			return errors.New("invalid role")
+		}
+		newUser.Role = "admin"
+	case "store":
+		if creatorRole != "super_admin" && creatorRole != "admin" {
+			return errors.New("invalid role")
+		}
+		if req.StoreName == "" {
+			return errors.New("invalid store name")
+		}
+		newUser.Role = "store"
+		newUser.StoreName = req.StoreName
+	default:
 		return errors.New("invalid role")
 	}
-	user, err := s.repo.FindByUsername(username)
-	if err == nil && user != nil {
-		return errors.New("username existed")
-	}
-	hashedPassword, err := password2.HashPassword(password)
-	newUser := &domain.User{
-		Username:  username,
-		Password:  hashedPassword,
-		Role:      role,
-		StoreName: storeName,
-	}
 	return s.repo.Create(newUser)
+}
+
+func (s *authService) GetProfile(userId uint) (*domain.User, error) {
+	user, err := s.repo.FindById(userId)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	if !user.IsActive {
+		return nil, errors.New("your account is inactive")
+	}
+	return user, nil
 }

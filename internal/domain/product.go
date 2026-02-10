@@ -15,7 +15,7 @@ type Product struct {
 	OM          float32 `json:"om"`
 	Type        string  `gorm:"size:50;not null" json:"type"`
 	OrderCycle  string  `gorm:"size:50;not null" json:"order_cycle"`
-	AuditCycle  string  `gorm:"size50;not null" json:"audit_cycle"`
+	AuditCycle  string  `gorm:"size:50;not null" json:"audit_cycle"`
 	IsActive    bool    `gorm:"default:true" json:"is_active"`
 
 	CreatedBy *uint      `json:"created_by,omitempty"`

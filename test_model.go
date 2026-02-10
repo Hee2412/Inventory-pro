@@ -1,36 +1,35 @@
-// test_user_repo.go (root)
 package main
 
 import (
 	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/database"
 	"Inventory-pro/pkg/password"
 	"fmt"
-	"log"
 )
 
 func main() {
 	cfg := config.Load()
 	db, _ := database.Connect(cfg.DatabaseURL)
 
-	// Init repository
-	userRepo := repository.NewUserRepository(db)
+	// Hash password
+	hashedPassword, _ := password.HashPassword("superadmin123")
 
-	hashedPassword, err := password.HashPassword("password123")
+	// Create admin
+	admin := &domain.User{
+		Username: "superadmin",
+		Password: hashedPassword,
+		Role:     "super_admin",
+		IsActive: true,
+	}
+
+	err := db.Create(admin).Error
 	if err != nil {
-		log.Fatal(err, "Failed to hash password")
+		fmt.Println("❌ Failed:", err)
+		return
 	}
 
-	user := domain.User{
-		Username:  "user",
-		Password:  hashedPassword,
-		StoreCode: "ST00001",
-	}
-	if err := userRepo.Create(&user); err != nil {
-		log.Fatal(err, "Failed to create user")
-	} else {
-		fmt.Println("✅ Created user ID:", user.ID)
-	}
+	fmt.Printf("✅ Admin created! ID: %d\n", admin.ID)
+	fmt.Println("Username: admin")
+	fmt.Println("Password: admin123")
 }

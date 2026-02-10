@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	ID        uint   `gorm:"primary_key" json:"id"`
+	ID        uint   `gorm:"primaryKey" json:"id"`
 	Username  string `gorm:"unique;not null;size:255" json:"username"`
 	Password  string `gorm:"not null;size:255" json:"-"`
-	Role      string `gorm:"not null;size:255" json:"role"`
-	StoreName string `gorm:"not null;size:255" json:"store_name"`
-	StoreCode string `gorm:"unique;size:255" json:"store_code"`
+	Role      string `gorm:"not null;size:50" json:"role"`
+	StoreName string `gorm:"size:255" json:"store_name"`
+	StoreCode string `gorm:"size:255" json:"store_code"`
 	IsActive  bool   `gorm:"default:true" json:"is_active"`
 
 	CreatedBy *uint          `json:"created_by,omitempty"`
@@ -26,17 +26,10 @@ func (User) TableName() string {
 	return "users"
 }
 
-func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if u.Role == "user" && u.StoreCode == "" {
-		u.StoreCode = fmt.Sprintf("TEMP-%d", time.Now().UnixNano())
-	}
-	return nil
-}
-
 func (u *User) AfterCreate(tx *gorm.DB) (err error) {
-	if u.Role == "user" {
-		newCode := fmt.Sprintf("ST%06d", u.ID)
-		return tx.Model(u).Update("store_code", newCode).Error
+	if u.Role == "store" && u.StoreCode == "" {
+		storeCode := fmt.Sprintf("ST%06d", u.ID)
+		return tx.Model(u).Update("store_code", storeCode).Error
 	}
 	return nil
 }

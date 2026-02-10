@@ -34,12 +34,18 @@ func (u *userRepository) Create(user *domain.User) error {
 func (u userRepository) FindById(id uint) (*domain.User, error) {
 	var user domain.User
 	err := u.db.First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
 	return &user, err
 }
 
 func (u userRepository) FindByUsername(username string) (*domain.User, error) {
 	var user domain.User
 	err := u.db.Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
 	return &user, err
 }
 

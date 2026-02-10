@@ -2,6 +2,7 @@ package main
 
 import (
 	"Inventory-pro/config"
+	"Inventory-pro/internal/domain"
 	"Inventory-pro/internal/handler"
 	"Inventory-pro/internal/middleware"
 	"Inventory-pro/internal/repository"
@@ -18,6 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect database", err)
 	}
+	_ = db.AutoMigrate(&domain.User{})
 
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo, cfg)
@@ -36,6 +38,10 @@ func main() {
 	{
 		authRoutes.POST("/login", authHandler.Login)
 		authRoutes.POST("/register", mw.Handler(), authHandler.Register)
+	}
+	protected := router.Group("/api")
+	{
+		protected.GET("/me", mw.Handler(), authHandler.GetProfile)
 	}
 
 	log.Printf("Server started on http://localhost:%s", cfg.Port)
