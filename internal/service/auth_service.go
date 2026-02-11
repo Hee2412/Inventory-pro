@@ -76,6 +76,7 @@ func (s *authService) Register(creatorRole string, req dto.RegisterRequest) erro
 	return s.repo.Create(newUser)
 }
 
+// GetProfile GET /api/me
 func (s *authService) GetProfile(userId uint) (*domain.User, error) {
 	user, err := s.repo.FindById(userId)
 	if err != nil {

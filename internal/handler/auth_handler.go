@@ -46,18 +46,10 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
 		return
 	}
-	roleValue, exists := c.Get("role")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	creatorRol, ok := roleValue.(string)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
 
-	err := handler.authService.Register(creatorRol, req)
+	creatorRol, _ := c.Get("role")
+	roleStr, _ := creatorRol.(string)
+	err := handler.authService.Register(roleStr, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

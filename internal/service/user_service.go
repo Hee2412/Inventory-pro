@@ -1,10 +1,12 @@
 package service
 
 import (
+	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
+	"Inventory-pro/pkg/password"
 	"errors"
 )
 
@@ -13,7 +15,7 @@ type UserService interface {
 	GetUserById(userId uint) (*response.UserResponse, error)
 	UpdateUser(userId uint, req request.UpdateUserRequest) error
 	DeactivateUser(userId uint) error
-	ActiveUser(userId uint) error
+	ActivateUser(userId uint) error
 
 	DeleteUser(userId uint) error
 	HardDeleteUser(userId uint) error
@@ -21,10 +23,11 @@ type UserService interface {
 
 type userService struct {
 	repo repository.UserRepository
+	cfg  *config.Config
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+func NewUserService(repo repository.UserRepository, cfg *config.Config) UserService {
+	return &userService{repo: repo, cfg: cfg}
 }
 func toUserResponse(user *domain.User) response.UserResponse {
 	return response.UserResponse{
@@ -69,7 +72,11 @@ func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) err
 		user.Username = *req.Username
 	}
 	if req.Password != nil {
-		user.Password = *req.Password
+		hashedPassword, err := password.HashPassword(*req.Password)
+		if err != nil {
+			return err
+		}
+		user.Password = hashedPassword
 	}
 	if req.IsActive != nil {
 		user.IsActive = *req.IsActive
@@ -91,7 +98,7 @@ func (s *userService) DeactivateUser(userId uint) error {
 	return s.repo.Update(user)
 }
 
-func (s *userService) ActiveUser(userId uint) error {
+func (s *userService) ActivateUser(userId uint) error {
 	user, err := s.repo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
@@ -104,22 +111,16 @@ func (s *userService) ActiveUser(userId uint) error {
 }
 
 func (s *userService) DeleteUser(userId uint) error {
-	user, err := s.repo.FindById(userId)
+	_, err := s.repo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
-	if user.IsActive != true {
-		return errors.New("user is not active")
-	}
-	return s.repo.Delete(user.ID)
+	return s.repo.Delete(userId)
 }
 func (s *userService) HardDeleteUser(userId uint) error {
-	user, err := s.repo.FindById(userId)
+	_, err := s.repo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
-	if user.IsActive == true {
-		return errors.New("user is active")
-	}
-	return s.repo.HardDelete(user.ID)
+	return s.repo.HardDelete(userId)
 }
