@@ -105,6 +105,7 @@ func (uh *UserHandler) DeleteUser(c *gin.Context) {
 	}
 	if err := uh.userHandler.DeleteUser(id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted user"})
 }

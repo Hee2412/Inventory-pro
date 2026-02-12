@@ -22,10 +22,13 @@ func main() {
 	_ = db.AutoMigrate(&domain.User{})
 
 	userRepo := repository.NewUserRepository(db)
+	productRepo := repository.NewProductRepository(db)
 	authService := service.NewAuthService(userRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
-	userService := service.NewUserService(userRepo, cfg)
+	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
+	productService := service.NewProductService(productRepo)
+	productHandler := handler.NewProductHandler(productService)
 	router := gin.Default()
 
 	router.GET("/health", func(c *gin.Context) {
@@ -45,25 +48,40 @@ func main() {
 	protected := router.Group("/api")
 	{
 		protected.GET("/me", authMiddleware.Handler(), authHandler.GetProfile)
+		protected.GET("/products", authMiddleware.Handler(), productHandler.GetAllProducts)
+		protected.GET("/product/:id", authMiddleware.Handler(), productHandler.GetProductById)
 	}
 
 	adminRoutes := router.Group("/api/admin")
-	adminRoutes.Use(authMiddleware.Handler())
-	adminRoutes.Use(authMiddleware.RequireRoles("admin", "super_admin"))
+	adminRoutes.Use(authMiddleware.Handler(), authMiddleware.RequireRoles("admin", "super_admin"))
 	{
-		adminRoutes.PUT("/register", authHandler.Register)
-		adminRoutes.GET("/users", userHandler.GetAllUsers)
-		adminRoutes.GET("/users/:id", userHandler.GetUserById)
-		adminRoutes.PUT("/users/:id", userHandler.UpdateUser)
-		adminRoutes.PATCH("/users/:id/deactivate", userHandler.DeactivateUser)
-		adminRoutes.PATCH("/users/:id/activate", userHandler.ActivateUser)
+		adminUser := adminRoutes.Group("/users")
+		{
+			adminUser.POST("/register", authHandler.Register)
+			adminUser.GET("", userHandler.GetAllUsers)
+			adminUser.GET("/:id", userHandler.GetUserById)
+			adminUser.PUT("/:id", userHandler.UpdateUser)
+			adminUser.PATCH("/:id/deactivate", userHandler.DeactivateUser)
+			adminUser.PATCH("/:id/activate", userHandler.ActivateUser)
+			adminUser.DELETE("/:id", userHandler.DeleteUser)
+		}
+
+		adminProduct := adminRoutes.Group("/products")
+		{
+			adminProduct.POST("", productHandler.CreateProduct)
+			adminProduct.PUT("/:id", productHandler.UpdateProduct)
+			adminProduct.PATCH("/:id/deactivate", productHandler.DeactivateProduct)
+			adminProduct.PATCH("/:id/activate", productHandler.ActivateProduct)
+			adminProduct.DELETE("/:id", productHandler.DeleteProduct)
+		}
 	}
+
 	superAdminRoutes := router.Group("/api/superadmin")
 	superAdminRoutes.Use(authMiddleware.Handler())
 	superAdminRoutes.Use(authMiddleware.RequireRoles("super_admin"))
 	{
-		superAdminRoutes.DELETE("/users/:id", userHandler.DeleteUser)
 		superAdminRoutes.DELETE("/users/:id/hard", userHandler.HardDeleteUser)
+		superAdminRoutes.DELETE("/product/:id/hard", productHandler.HardDeleteProduct)
 	}
 
 	log.Printf("Server started on http://localhost:%s", cfg.Port)

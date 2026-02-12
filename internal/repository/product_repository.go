@@ -10,7 +10,7 @@ type ProductRepository interface {
 	FindById(id uint) (*domain.Product, error)
 	FindByProductName(productName string) (*domain.Product, error)
 	FindByProductCode(productCode string) (*domain.Product, error)
-	FindAll() ([]domain.Product, error)
+	FindAll() ([]*domain.Product, error)
 	Update(product *domain.Product) error
 	Delete(id uint) error
 	HardDelete(id uint) error
@@ -56,14 +56,14 @@ func (p *productRepository) FindByProductCode(productCode string) (*domain.Produ
 	return &product, nil
 }
 
-func (p *productRepository) FindAll() ([]domain.Product, error) {
-	var product []domain.Product
+func (p *productRepository) FindAll() ([]*domain.Product, error) {
+	var product []*domain.Product
 	err := p.db.Find(&product).Error
 	return product, err
 }
 
 func (p *productRepository) Update(product *domain.Product) error {
-	return p.db.Updates(product).Error
+	return p.db.Save(product).Error
 }
 
 func (p *productRepository) Delete(id uint) error {

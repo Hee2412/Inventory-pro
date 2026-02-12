@@ -18,7 +18,7 @@ type Config struct {
 
 func Load() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  No .env file found, using environment variables")
+		log.Println("No .env file found, using environment variables")
 	}
 	jwtStr := getEnv("JWT_EXPiRES_HOURS", "24")
 	jwtInt, err := strconv.Atoi(jwtStr)

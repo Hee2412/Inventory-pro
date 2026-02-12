@@ -1,7 +1,6 @@
 package service
 
 import (
-	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
@@ -23,11 +22,10 @@ type UserService interface {
 
 type userService struct {
 	repo repository.UserRepository
-	cfg  *config.Config
 }
 
-func NewUserService(repo repository.UserRepository, cfg *config.Config) UserService {
-	return &userService{repo: repo, cfg: cfg}
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{repo: repo}
 }
 func toUserResponse(user *domain.User) response.UserResponse {
 	return response.UserResponse{
