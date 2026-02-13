@@ -15,7 +15,7 @@ type CreateProductRequest struct {
 	ProductName string  `json:"product_name" binding:"required"`
 	Unit        string  `json:"unit" binding:"required"`
 	MOQ         float32 `json:"moq" binding:"required"`
-	OM          float32 `json:"om,omitempty" binding:"required"`
+	OM          float32 `json:"om" binding:"required"`
 	Type        string  `json:"type" binding:"required"`
 	OrderCycle  string  `json:"order_cycle" binding:"required"`
 	AuditCycle  string  `json:"audit_cycle" binding:"required"`

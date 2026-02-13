@@ -14,8 +14,7 @@ type ProductRepository interface {
 	Update(product *domain.Product) error
 	Delete(id uint) error
 	HardDelete(id uint) error
-
-	FindActiveProducts() ([]domain.Product, error)
+	FindActiveProducts() ([]*domain.Product, error)
 }
 
 type productRepository struct {
@@ -74,8 +73,8 @@ func (p *productRepository) HardDelete(id uint) error {
 	return p.db.Unscoped().Delete(&domain.Product{}, id).Error
 }
 
-func (p *productRepository) FindActiveProducts() ([]domain.Product, error) {
-	var product []domain.Product
+func (p *productRepository) FindActiveProducts() ([]*domain.Product, error) {
+	var product []*domain.Product
 	err := p.db.Where("is_active = true", true).Find(&product).Error
 	return product, err
 }

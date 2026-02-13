@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect database", err)
 	}
-	_ = db.AutoMigrate(&domain.User{})
+	_ = db.AutoMigrate(&domain.User{}, &domain.Product{})
 
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
@@ -49,7 +49,7 @@ func main() {
 	{
 		protected.GET("/me", authMiddleware.Handler(), authHandler.GetProfile)
 		protected.GET("/products", authMiddleware.Handler(), productHandler.GetAllProducts)
-		protected.GET("/product/:id", authMiddleware.Handler(), productHandler.GetProductById)
+		protected.GET("/products/:id", authMiddleware.Handler(), productHandler.GetProductById)
 	}
 
 	adminRoutes := router.Group("/api/admin")
@@ -68,6 +68,7 @@ func main() {
 
 		adminProduct := adminRoutes.Group("/products")
 		{
+			adminProduct.GET("", productHandler.GetAllProductsForAdmin)
 			adminProduct.POST("", productHandler.CreateProduct)
 			adminProduct.PUT("/:id", productHandler.UpdateProduct)
 			adminProduct.PATCH("/:id/deactivate", productHandler.DeactivateProduct)
@@ -81,7 +82,7 @@ func main() {
 	superAdminRoutes.Use(authMiddleware.RequireRoles("super_admin"))
 	{
 		superAdminRoutes.DELETE("/users/:id/hard", userHandler.HardDeleteUser)
-		superAdminRoutes.DELETE("/product/:id/hard", productHandler.HardDeleteProduct)
+		superAdminRoutes.DELETE("/products/:id/hard", productHandler.HardDeleteProduct)
 	}
 
 	log.Printf("Server started on http://localhost:%s", cfg.Port)

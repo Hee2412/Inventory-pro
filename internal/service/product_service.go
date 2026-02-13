@@ -6,19 +6,18 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
 	"errors"
-	"github.com/jinzhu/copier"
-	"log"
 )
 
 type ProductService interface {
 	GetAllProducts() ([]response.ProductResponse, error)
+	FindActiveProducts() ([]response.ProductResponse, error)
 	GetProductById(productId uint) (*response.ProductResponse, error)
 	CreateProduct(req request.CreateProductRequest) (*response.ProductResponse, error)
 	UpdateProduct(productId uint, req request.UpdateProductRequest) error
 	DeactivateProduct(productId uint) error
-	ActivateProducts(productId uint) error
-	DeleteProducts(productId uint) error
-	HardDeleteProducts(productId uint) error
+	ActivateProduct(productId uint) error
+	DeleteProduct(productId uint) error
+	HardDeleteProduct(productId uint) error
 }
 
 type productService struct {
@@ -44,6 +43,17 @@ func toProductResponse(product *domain.Product) response.ProductResponse {
 	}
 }
 
+func (p *productService) FindActiveProducts() ([]response.ProductResponse, error) {
+	products, err := p.repo.FindActiveProducts()
+	if err != nil {
+		return nil, err
+	}
+	var result []response.ProductResponse
+	for _, product := range products {
+		result = append(result, toProductResponse(product))
+	}
+	return result, nil
+}
 func (p *productService) GetAllProducts() ([]response.ProductResponse, error) {
 	product, err := p.repo.FindAll()
 	if err != nil {
@@ -89,10 +99,29 @@ func (p *productService) UpdateProduct(productId uint, req request.UpdateProduct
 	if err != nil {
 		return errors.New("product not found")
 	}
-	err = copier.Copy(product, req)
-	if err != nil {
-		log.Printf("copy error: %v", err)
-		return errors.New("error 500")
+	if req.ProductName != nil {
+		product.ProductName = *req.ProductName
+	}
+	if req.Unit != nil {
+		product.Unit = *req.Unit
+	}
+	if req.MOQ != nil {
+		product.MOQ = *req.MOQ
+	}
+	if req.OM != nil {
+		product.OM = *req.OM
+	}
+	if req.Type != nil {
+		product.Type = *req.Type
+	}
+	if req.OrderCycle != nil {
+		product.OrderCycle = *req.OrderCycle
+	}
+	if req.AuditCycle != nil {
+		product.AuditCycle = *req.AuditCycle
+	}
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
 	}
 	return p.repo.Update(product)
 }
@@ -109,7 +138,7 @@ func (p *productService) DeactivateProduct(productId uint) error {
 	return p.repo.Update(product)
 }
 
-func (p *productService) ActivateProducts(productId uint) error {
+func (p *productService) ActivateProduct(productId uint) error {
 	product, err := p.repo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
@@ -121,7 +150,7 @@ func (p *productService) ActivateProducts(productId uint) error {
 	return p.repo.Update(product)
 }
 
-func (p *productService) DeleteProducts(productId uint) error {
+func (p *productService) DeleteProduct(productId uint) error {
 	_, err := p.repo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
@@ -129,7 +158,7 @@ func (p *productService) DeleteProducts(productId uint) error {
 	return p.repo.Delete(productId)
 }
 
-func (p *productService) HardDeleteProducts(productId uint) error {
+func (p *productService) HardDeleteProduct(productId uint) error {
 	_, err := p.repo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")

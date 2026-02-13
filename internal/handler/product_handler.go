@@ -17,6 +17,16 @@ func NewProductHandler(productHandler service.ProductService) *ProductHandler {
 
 // GetAllProducts GET /api/products
 func (p *ProductHandler) GetAllProducts(c *gin.Context) {
+	products, err := p.productHandler.FindActiveProducts()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"products": products})
+}
+
+// GetAllProductsForAdmin GET /api/admin/products
+func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 	products, err := p.productHandler.GetAllProducts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -102,7 +112,7 @@ func (p *ProductHandler) ActivateProduct(c *gin.Context) {
 			"error": "Invalid Product ID"})
 		return
 	}
-	if err = p.productHandler.ActivateProducts(id); err != nil {
+	if err = p.productHandler.ActivateProduct(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Fails to activate products",
 			"error":   err.Error()})
@@ -118,7 +128,7 @@ func (p *ProductHandler) DeleteProduct(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
 		return
 	}
-	if err = p.productHandler.DeleteProducts(id); err != nil {
+	if err = p.productHandler.DeleteProduct(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Fails to delete products",
 			"error":   err.Error()})
@@ -134,7 +144,7 @@ func (p *ProductHandler) HardDeleteProduct(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
 		return
 	}
-	if err = p.productHandler.HardDeleteProducts(id); err != nil {
+	if err = p.productHandler.HardDeleteProduct(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Fails to delete products",
 			"error":   err.Error()})
