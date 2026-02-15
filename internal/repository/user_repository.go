@@ -33,11 +33,11 @@ func (u *userRepository) Create(user *domain.User) error {
 
 func (u *userRepository) FindById(id uint) (*domain.User, error) {
 	var user domain.User
-	err := u.db.First(&user, id).Error
+	err := u.db.Where("id=?", id).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
-	return &user, err
+	return &user, nil
 }
 
 func (u *userRepository) FindByUsername(username string) (*domain.User, error) {
@@ -46,13 +46,16 @@ func (u *userRepository) FindByUsername(username string) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &user, err
+	return &user, nil
 }
 
 func (u *userRepository) FindAll() ([]*domain.User, error) {
 	var users []*domain.User
 	err := u.db.Find(&users).Error
-	return users, err
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (u *userRepository) Update(user *domain.User) error {
@@ -70,17 +73,26 @@ func (u *userRepository) HardDelete(id uint) error {
 func (u *userRepository) FindByRole(role string) ([]*domain.User, error) {
 	var user []*domain.User
 	err := u.db.Where("role = ?", role).Find(&user).Error
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (u *userRepository) FindActiveUsers() ([]*domain.User, error) {
 	var user []*domain.User
-	err := u.db.Where("is_active = true", true).Find(&user).Error
-	return user, err
+	err := u.db.Where("is_active = true").Find(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 func (u *userRepository) CountByRole(role string) (int64, error) {
 	var count int64
 	err := u.db.Table("users").Where("role = ?", role).Count(&count).Error
-	return count, err
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

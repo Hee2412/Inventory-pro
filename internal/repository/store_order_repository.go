@@ -30,7 +30,10 @@ func (s *storeOrderRepository) Create(order *domain.StoreOrder) error {
 func (s *storeOrderRepository) FindById(id uint) (*domain.StoreOrder, error) {
 	var order domain.StoreOrder
 	err := s.db.Where("id = ?", id).First(&order).Error
-	return &order, err
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (s *storeOrderRepository) Update(order *domain.StoreOrder) error {
@@ -40,23 +43,35 @@ func (s *storeOrderRepository) Update(order *domain.StoreOrder) error {
 func (s *storeOrderRepository) FindByStoreAndSession(sessionId uint, storeId uint) (*domain.StoreOrder, error) {
 	var order domain.StoreOrder
 	err := s.db.Where("store_id = ? AND session_id = ?", storeId, sessionId).First(&order).Error
-	return &order, err
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (s *storeOrderRepository) FindByStoreID(storeId uint) ([]*domain.StoreOrder, error) {
 	var orders []*domain.StoreOrder
 	err := s.db.Where("store_id = ?", storeId).Find(&orders).Error
-	return orders, err
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (s *storeOrderRepository) FindBySessionID(sessionID uint) ([]*domain.StoreOrder, error) {
 	var orders []*domain.StoreOrder
 	err := s.db.Where("session_id = ?", sessionID).Find(&orders).Error
-	return orders, err
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (s *storeOrderRepository) FindByStatus(status string) ([]*domain.StoreOrder, error) {
 	var orders []*domain.StoreOrder
 	err := s.db.Where("status = ?", status).Find(&orders).Error
-	return orders, err
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
 }

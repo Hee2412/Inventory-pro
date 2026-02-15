@@ -56,9 +56,9 @@ func (p *productRepository) FindByProductCode(productCode string) (*domain.Produ
 }
 
 func (p *productRepository) FindAll() ([]*domain.Product, error) {
-	var product []*domain.Product
-	err := p.db.Find(&product).Error
-	return product, err
+	var products []*domain.Product
+	err := p.db.Find(&products).Error
+	return products, err
 }
 
 func (p *productRepository) Update(product *domain.Product) error {
@@ -74,7 +74,10 @@ func (p *productRepository) HardDelete(id uint) error {
 }
 
 func (p *productRepository) FindActiveProducts() ([]*domain.Product, error) {
-	var product []*domain.Product
-	err := p.db.Where("is_active = true", true).Find(&product).Error
-	return product, err
+	var products []*domain.Product
+	err := p.db.Where("is_active = true").Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
 }

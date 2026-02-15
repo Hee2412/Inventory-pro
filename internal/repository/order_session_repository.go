@@ -29,19 +29,28 @@ func (o *orderSessionRepository) Create(orderSession *domain.OrderSession) error
 func (o *orderSessionRepository) FindById(id uint) (*domain.OrderSession, error) {
 	var orderSession domain.OrderSession
 	err := o.db.Where("id = ?", id).First(&orderSession).Error
-	return &orderSession, err
+	if err != nil {
+		return nil, err
+	}
+	return &orderSession, nil
 }
 
 func (o *orderSessionRepository) FindAll() ([]*domain.OrderSession, error) {
 	var orderSessions []*domain.OrderSession
 	err := o.db.Find(&orderSessions).Error
-	return orderSessions, err
+	if err != nil {
+		return nil, err
+	}
+	return orderSessions, nil
 }
 
 func (o *orderSessionRepository) FindByStatus(status string) ([]*domain.OrderSession, error) {
 	var orderSessions []*domain.OrderSession
 	err := o.db.Where("status = ?", status).Find(&orderSessions).Error
-	return orderSessions, err
+	if err != nil {
+		return nil, err
+	}
+	return orderSessions, nil
 }
 
 func (o *orderSessionRepository) Update(orderSession *domain.OrderSession) error {
