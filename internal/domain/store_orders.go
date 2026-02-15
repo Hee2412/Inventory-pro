@@ -2,7 +2,7 @@ package domain
 
 import "time"
 
-type StoreOrders struct {
+type StoreOrder struct {
 	ID          uint       `gorm:"primary_key" json:"id"`
 	SessionID   uint       `json:"session_id"`
 	StoreID     uint       `json:"store_id"`
@@ -14,6 +14,6 @@ type StoreOrders struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-func (StoreOrders) TableName() string {
+func (StoreOrder) TableName() string {
 	return "store_orders"
 }
