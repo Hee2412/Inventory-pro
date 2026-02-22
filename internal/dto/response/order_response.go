@@ -5,7 +5,7 @@ import "time"
 type OrderSessionResponse struct {
 	ID         uint      `json:"id"`
 	Title      string    `json:"title"`
-	OrderCycle uint      `json:"order_cycle"`
+	OrderCycle string    `json:"order_cycle"`
 	Status     string    `json:"status"`
 	Deadline   time.Time `json:"deadline"`
 	DeliveryAt time.Time `json:"delivery_at"`
@@ -33,4 +33,13 @@ type OrderItemResponse struct {
 type StoreOrderDetailResponse struct {
 	Order StoreOrderResponse  `json:"order"`
 	Items []OrderItemResponse `json:"items"`
+}
+
+type AdminOrderInSessionResponse struct {
+	ID          uint       `json:"id"`
+	StoreID     uint       `json:"store_id"`
+	StoreName   string     `json:"store_name"`
+	Status      string     `json:"status"`
+	SubmittedAt *time.Time `json:"submitted_at"`
+	CreatedAt   time.Time  `json:"created_at"`
 }

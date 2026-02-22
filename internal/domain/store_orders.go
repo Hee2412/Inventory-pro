@@ -6,12 +6,14 @@ type StoreOrder struct {
 	ID          uint       `gorm:"primary_key" json:"id"`
 	SessionID   uint       `json:"session_id"`
 	StoreID     uint       `json:"store_id"`
+	StoreName   string     `json:"store_name"`
 	Status      string     `gorm:"size:50" json:"status"`
 	SubmittedAt *time.Time `json:"submitted_at,omitempty"`
 	ApproveAt   *time.Time `json:"approve_at,omitempty"`
 	ApproveBy   *uint      `json:"approve_by,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+	Note        string     `json:"note"`
 }
 
 func (StoreOrder) TableName() string {
