@@ -15,8 +15,8 @@ type UserHandler struct {
 func NewUserHandler(userService service.UserService) *UserHandler {
 	return &UserHandler{userHandler: userService}
 }
-func getIDParam(c *gin.Context) (uint, error) {
-	idStr := c.Param("id")
+func getIDParam(c *gin.Context, paramName string) (uint, error) {
+	idStr := c.Param(paramName)
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		return 0, err
@@ -24,8 +24,7 @@ func getIDParam(c *gin.Context) (uint, error) {
 	return uint(id), nil
 }
 
-// GET /api/admin/users
-
+// GetAllUsers GET /api/admin/users
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 	users, err := uh.userHandler.GetAllUsers()
 	if err != nil {
@@ -37,7 +36,7 @@ func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 
 // GetUserById GET /api/admin/users/:id
 func (uh *UserHandler) GetUserById(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -52,7 +51,7 @@ func (uh *UserHandler) GetUserById(c *gin.Context) {
 
 // UpdateUser PUT /api/admin/users/:id
 func (uh *UserHandler) UpdateUser(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -70,7 +69,7 @@ func (uh *UserHandler) UpdateUser(c *gin.Context) {
 
 // DeactivateUser PATCH /api/admin/users/:id/deactivate
 func (uh *UserHandler) DeactivateUser(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -84,7 +83,7 @@ func (uh *UserHandler) DeactivateUser(c *gin.Context) {
 
 // ActivateUser PATCH /api/admin/users/:id/activate
 func (uh *UserHandler) ActivateUser(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -98,7 +97,7 @@ func (uh *UserHandler) ActivateUser(c *gin.Context) {
 
 // DeleteUser DELETE /api/admin/users/:id
 func (uh *UserHandler) DeleteUser(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
@@ -112,7 +111,7 @@ func (uh *UserHandler) DeleteUser(c *gin.Context) {
 
 // HardDeleteUser DELETE /api/superadmin/users/:id/hard
 func (uh *UserHandler) HardDeleteUser(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return

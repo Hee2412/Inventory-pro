@@ -35,6 +35,11 @@ type StoreOrderDetailResponse struct {
 	Items []OrderItemResponse `json:"items"`
 }
 
+type OrderSessionDetailResponse struct {
+	Session  OrderSessionResponse `json:"order"`
+	Products []ProductResponse    `json:"items"`
+}
+
 type AdminOrderInSessionResponse struct {
 	ID          uint       `json:"id"`
 	StoreID     uint       `json:"store_id"`

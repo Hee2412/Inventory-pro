@@ -37,9 +37,9 @@ func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 
 // GetProductById GET /api/products/:id
 func (p *ProductHandler) GetProductById(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Products ID"})
 		return
 	}
 	product, err := p.productHandler.GetProductById(id)
@@ -64,7 +64,7 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 			"error":   err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"success": "Product created successfully",
+	c.JSON(http.StatusCreated, gin.H{"success": "Products created successfully",
 		"product": data})
 }
 
@@ -75,9 +75,9 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input"})
 		return
 	}
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Products ID"})
 		return
 	}
 	if err = p.productHandler.UpdateProduct(id, req); err != nil {
@@ -86,14 +86,14 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 			"error":   err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": "Product updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "Products updated successfully"})
 }
 
 // DeactivateProduct PATCH /api/admin/products/:id/deactivate
 func (p *ProductHandler) DeactivateProduct(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Products ID"})
 		return
 	}
 	if err = p.productHandler.DeactivateProduct(id); err != nil {
@@ -101,15 +101,15 @@ func (p *ProductHandler) DeactivateProduct(c *gin.Context) {
 			"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": "Product deactivated successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "Products deactivated successfully"})
 }
 
 // ActivateProduct PATCH /api/admin/products/:id/activate
 func (p *ProductHandler) ActivateProduct(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Invalid Product ID"})
+			"error": "Invalid Products ID"})
 		return
 	}
 	if err = p.productHandler.ActivateProduct(id); err != nil {
@@ -118,14 +118,14 @@ func (p *ProductHandler) ActivateProduct(c *gin.Context) {
 			"error":   err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": "Product activated successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "Products activated successfully"})
 }
 
 // DeleteProduct DELETE /api/admin/products/:id
 func (p *ProductHandler) DeleteProduct(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Products ID"})
 		return
 	}
 	if err = p.productHandler.DeleteProduct(id); err != nil {
@@ -134,14 +134,14 @@ func (p *ProductHandler) DeleteProduct(c *gin.Context) {
 			"error":   err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": "Product deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "Products deleted successfully"})
 }
 
 // HardDeleteProduct DELETE /api/superadmin/products/:id/hard
 func (p *ProductHandler) HardDeleteProduct(c *gin.Context) {
-	id, err := getIDParam(c)
+	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Product ID"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid Products ID"})
 		return
 	}
 	if err = p.productHandler.HardDeleteProduct(id); err != nil {
@@ -150,5 +150,5 @@ func (p *ProductHandler) HardDeleteProduct(c *gin.Context) {
 			"error":   err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": "Product deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": "Products deleted successfully"})
 }

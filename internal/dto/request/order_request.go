@@ -18,3 +18,7 @@ type UpdateOrderItemRequest struct {
 	ProductID uint    `json:"product_id" binding:"required"`
 	Quantity  float64 `json:"quantity" binding:"required"`
 }
+
+type DeclineOrderRequest struct {
+	Reason string `json:"reason" binding:"required,min=5"`
+}

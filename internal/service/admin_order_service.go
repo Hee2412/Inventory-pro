@@ -38,7 +38,7 @@ func toOrderInSessionResponse(order *domain.StoreOrder) response.AdminOrderInSes
 	}
 }
 
-func (a adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.AdminOrderInSessionResponse, error) {
+func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.AdminOrderInSessionResponse, error) {
 	//var sessionID
 	_, err := a.sessionRepo.FindById(sessionID)
 	if err != nil {
@@ -56,7 +56,7 @@ func (a adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.Admi
 	return result, nil
 }
 
-func (a adminOrderService) ApproveOrder(orderId uint) error {
+func (a *adminOrderService) ApproveOrder(orderId uint) error {
 	//Find orderByID
 	order, err := a.orderRepo.FindById(orderId)
 	if err != nil {
@@ -64,7 +64,7 @@ func (a adminOrderService) ApproveOrder(orderId uint) error {
 	}
 	//Check status ("Submitted")
 	if order.Status != "SUBMITTED" {
-		return errors.New("order status is not SUMMITED")
+		return errors.New("order status is not SUBMITTED")
 	}
 	//Change status ("Approved")
 	order.Status = "APPROVED"
@@ -75,7 +75,7 @@ func (a adminOrderService) ApproveOrder(orderId uint) error {
 	return a.orderRepo.Update(order)
 }
 
-func (a adminOrderService) DeclineOrder(orderId uint, reason string) error {
+func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	//Find orderByID
 	order, err := a.orderRepo.FindById(orderId)
 	if err != nil {
@@ -83,11 +83,10 @@ func (a adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	}
 	//Check status ("Submitted")
 	if order.Status != "SUBMITTED" {
-		return errors.New("order status is not SUMMITED")
+		return errors.New("order status is not SUBMITTED")
 	}
 	//Change status ("Declined")
 	order.Status = "DECLINED"
-	//Reason
 	order.Note = reason
 	//Save/Update
 	return a.orderRepo.Update(order)

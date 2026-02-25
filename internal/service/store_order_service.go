@@ -62,7 +62,7 @@ func toStoreOrderResponse(order *domain.StoreOrder) response.StoreOrderResponse 
 	}
 }
 
-func (s storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
+func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
 	session, err := s.sessionRepo.FindById(sessionID)
 	if err != nil {
 		return nil, errors.New("session not found")
@@ -90,7 +90,7 @@ func (s storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*resp
 	return result, nil
 }
 
-func (s storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error {
+func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error {
 	order, err := s.repo.FindById(orderID)
 	if err != nil {
 		return errors.New("order not found")
@@ -120,7 +120,7 @@ func (s storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItem
 	return s.orderItemRepo.Update(targetItem)
 }
 
-func (s storeOrderService) SubmitOrder(orderId uint) error {
+func (s *storeOrderService) SubmitOrder(orderId uint) error {
 	order, err := s.repo.FindById(orderId)
 	if err != nil {
 		return errors.New("order not found")
@@ -141,7 +141,7 @@ func (s storeOrderService) SubmitOrder(orderId uint) error {
 	return s.repo.Update(order)
 }
 
-func (s storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {
+func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {
 	//Find Order
 	order, err := s.repo.FindById(OrderID)
 	if err != nil {
@@ -161,7 +161,7 @@ func (s storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDet
 	return result, nil
 }
 
-func (s storeOrderService) GetMyOrder(storeID uint) ([]response.StoreOrderResponse, error) {
+func (s *storeOrderService) GetMyOrder(storeID uint) ([]response.StoreOrderResponse, error) {
 	//findOrder By storeID
 	orders, err := s.repo.FindByStoreID(storeID)
 	if err != nil {
