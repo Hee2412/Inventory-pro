@@ -16,16 +16,16 @@ type AuthService interface {
 	GetProfile(userId uint) (*domain.User, error)
 }
 type authService struct {
-	repo repository.UserRepository
-	cfg  *config.Config
+	userRepo repository.UserRepository
+	cfg      *config.Config
 }
 
 func NewAuthService(repo repository.UserRepository, cfg *config.Config) AuthService {
-	return &authService{repo: repo, cfg: cfg}
+	return &authService{userRepo: repo, cfg: cfg}
 }
 
 func (s *authService) Login(username string, password string) (string, *domain.User, error) {
-	user, err := s.repo.FindByUsername(username)
+	user, err := s.userRepo.FindByUsername(username)
 	if err != nil {
 		return "", nil, errors.New("user not found")
 	}
@@ -43,7 +43,7 @@ func (s *authService) Login(username string, password string) (string, *domain.U
 }
 
 func (s *authService) Register(creatorRole string, req dto.RegisterRequest) error {
-	if existingUser, _ := s.repo.FindByUsername(req.Username); existingUser != nil {
+	if existingUser, _ := s.userRepo.FindByUsername(req.Username); existingUser != nil {
 		return errors.New("user already exists")
 	}
 	hashedPassword, err := password2.HashPassword(req.Password)
@@ -73,12 +73,12 @@ func (s *authService) Register(creatorRole string, req dto.RegisterRequest) erro
 	default:
 		return errors.New("invalid role")
 	}
-	return s.repo.Create(newUser)
+	return s.userRepo.Create(newUser)
 }
 
 // GetProfile GET /api/me
 func (s *authService) GetProfile(userId uint) (*domain.User, error) {
-	user, err := s.repo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}

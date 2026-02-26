@@ -21,11 +21,11 @@ type ProductService interface {
 }
 
 type productService struct {
-	repo repository.ProductRepository
+	productRepo repository.ProductRepository
 }
 
 func NewProductService(repo repository.ProductRepository) ProductService {
-	return &productService{repo: repo}
+	return &productService{productRepo: repo}
 }
 
 func toProductResponse(product *domain.Product) response.ProductResponse {
@@ -44,7 +44,7 @@ func toProductResponse(product *domain.Product) response.ProductResponse {
 }
 
 func (p *productService) FindActiveProducts() ([]response.ProductResponse, error) {
-	products, err := p.repo.FindActiveProducts()
+	products, err := p.productRepo.FindActiveProducts()
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (p *productService) FindActiveProducts() ([]response.ProductResponse, error
 	return result, nil
 }
 func (p *productService) GetAllProducts() ([]response.ProductResponse, error) {
-	product, err := p.repo.FindAll()
+	product, err := p.productRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (p *productService) GetAllProducts() ([]response.ProductResponse, error) {
 }
 
 func (p *productService) GetProductById(productId uint) (*response.ProductResponse, error) {
-	product, err := p.repo.FindById(productId)
+	product, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 		AuditCycle:  req.AuditCycle,
 		IsActive:    req.IsActive,
 	}
-	err := p.repo.Create(newProduct)
+	err := p.productRepo.Create(newProduct)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 }
 
 func (p *productService) UpdateProduct(productId uint, req request.UpdateProductRequest) error {
-	product, err := p.repo.FindById(productId)
+	product, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
 	}
@@ -123,11 +123,11 @@ func (p *productService) UpdateProduct(productId uint, req request.UpdateProduct
 	if req.IsActive != nil {
 		product.IsActive = *req.IsActive
 	}
-	return p.repo.Update(product)
+	return p.productRepo.Update(product)
 }
 
 func (p *productService) DeactivateProduct(productId uint) error {
-	product, err := p.repo.FindById(productId)
+	product, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
 	}
@@ -135,11 +135,11 @@ func (p *productService) DeactivateProduct(productId uint) error {
 		return errors.New("product is not active")
 	}
 	product.IsActive = false
-	return p.repo.Update(product)
+	return p.productRepo.Update(product)
 }
 
 func (p *productService) ActivateProduct(productId uint) error {
-	product, err := p.repo.FindById(productId)
+	product, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
 	}
@@ -147,21 +147,21 @@ func (p *productService) ActivateProduct(productId uint) error {
 		return errors.New("product is active")
 	}
 	product.IsActive = true
-	return p.repo.Update(product)
+	return p.productRepo.Update(product)
 }
 
 func (p *productService) DeleteProduct(productId uint) error {
-	_, err := p.repo.FindById(productId)
+	_, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
 	}
-	return p.repo.Delete(productId)
+	return p.productRepo.Delete(productId)
 }
 
 func (p *productService) HardDeleteProduct(productId uint) error {
-	_, err := p.repo.FindById(productId)
+	_, err := p.productRepo.FindById(productId)
 	if err != nil {
 		return errors.New("product not found")
 	}
-	return p.repo.HardDelete(productId)
+	return p.productRepo.HardDelete(productId)
 }

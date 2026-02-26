@@ -18,20 +18,20 @@ type StoreOrderService interface {
 }
 
 type storeOrderService struct {
-	repo          repository.StoreOrderRepository
-	sessionRepo   repository.OrderSessionRepository
-	orderItemRepo repository.StoreOrderItemRepository
+	storeOrderRepo     repository.StoreOrderRepository
+	orderSessionRepo   repository.OrderSessionRepository
+	storeOrderItemRepo repository.StoreOrderItemRepository
 }
 
 func NewStoreOrderService(
-	repo repository.StoreOrderRepository,
-	sessionRepo repository.OrderSessionRepository,
-	orderItemRepo repository.StoreOrderItemRepository,
+	storeOrderRepo repository.StoreOrderRepository,
+	orderSessionRepo repository.OrderSessionRepository,
+	storeOrderItemRepo repository.StoreOrderItemRepository,
 ) StoreOrderService {
 	return &storeOrderService{
-		repo:          repo,
-		sessionRepo:   sessionRepo,
-		orderItemRepo: orderItemRepo,
+		storeOrderRepo:     storeOrderRepo,
+		orderSessionRepo:   orderSessionRepo,
+		storeOrderItemRepo: storeOrderItemRepo,
 	}
 }
 
@@ -63,26 +63,26 @@ func toStoreOrderResponse(order *domain.StoreOrder) response.StoreOrderResponse 
 }
 
 func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
-	session, err := s.sessionRepo.FindById(sessionID)
+	session, err := s.orderSessionRepo.FindById(sessionID)
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
 	if session.Status != "OPEN" {
 		return nil, errors.New("session is not open")
 	}
-	order, err := s.repo.FindByStoreAndSession(sessionID, storeID)
+	order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
 	if err != nil {
 		order = &domain.StoreOrder{
 			SessionID: sessionID,
 			StoreID:   storeID,
 			Status:    "DRAFT",
 		}
-		err = s.repo.Create(order)
+		err = s.storeOrderRepo.Create(order)
 		if err != nil {
 			return nil, err
 		}
 	}
-	items, _ := s.orderItemRepo.FindByOrderId(order.ID)
+	items, _ := s.storeOrderItemRepo.FindByOrderId(order.ID)
 	result := &response.StoreOrderDetailResponse{
 		Order: toStoreOrderResponse(order),
 		Items: toOrderItemResponse(items),
@@ -91,14 +91,14 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 }
 
 func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error {
-	order, err := s.repo.FindById(orderID)
+	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		return errors.New("order not found")
 	}
 	if order.Status != "DRAFT" {
 		return errors.New("can only edit draft orders")
 	}
-	items, err := s.orderItemRepo.FindByOrderId(orderID)
+	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
 	if err != nil {
 		return err
 	}
@@ -114,21 +114,21 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 			OrderID:   order.ID,
 			Quantity:  req.Quantity,
 			ProductID: req.ProductID}
-		return s.orderItemRepo.Create(newItem)
+		return s.storeOrderItemRepo.Create(newItem)
 	}
 	targetItem.Quantity = req.Quantity
-	return s.orderItemRepo.Update(targetItem)
+	return s.storeOrderItemRepo.Update(targetItem)
 }
 
 func (s *storeOrderService) SubmitOrder(orderId uint) error {
-	order, err := s.repo.FindById(orderId)
+	order, err := s.storeOrderRepo.FindById(orderId)
 	if err != nil {
 		return errors.New("order not found")
 	}
 	if order.Status != "DRAFT" {
 		return errors.New("can only edit draft orders")
 	}
-	items, err := s.orderItemRepo.FindByOrderId(orderId)
+	items, err := s.storeOrderItemRepo.FindByOrderId(orderId)
 	if err != nil {
 		return err
 	}
@@ -138,17 +138,17 @@ func (s *storeOrderService) SubmitOrder(orderId uint) error {
 	now := time.Now()
 	order.Status = "SUBMITTED"
 	order.SubmittedAt = &now
-	return s.repo.Update(order)
+	return s.storeOrderRepo.Update(order)
 }
 
 func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {
 	//Find Order
-	order, err := s.repo.FindById(OrderID)
+	order, err := s.storeOrderRepo.FindById(OrderID)
 	if err != nil {
 		return nil, errors.New("order not found")
 	}
 	//Check item
-	items, err := s.orderItemRepo.FindByOrderId(OrderID)
+	items, err := s.storeOrderItemRepo.FindByOrderId(OrderID)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDe
 
 func (s *storeOrderService) GetMyOrder(storeID uint) ([]response.StoreOrderResponse, error) {
 	//findOrder By storeID
-	orders, err := s.repo.FindByStoreID(storeID)
+	orders, err := s.storeOrderRepo.FindByStoreID(storeID)
 	if err != nil {
 		return make([]response.StoreOrderResponse, 0), nil
 	}

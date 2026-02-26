@@ -15,16 +15,16 @@ type AdminOrderService interface {
 }
 
 type adminOrderService struct {
-	sessionRepo repository.OrderSessionRepository
-	orderRepo   repository.StoreOrderRepository
+	orderSessionRepo repository.OrderSessionRepository
+	storeOrderRepo   repository.StoreOrderRepository
 }
 
 func NewAdminOrderService(
-	repo repository.OrderSessionRepository,
-	orderRepo repository.StoreOrderRepository) AdminOrderService {
+	orderSessionRepo repository.OrderSessionRepository,
+	storeOrderRepo repository.StoreOrderRepository) AdminOrderService {
 	return &adminOrderService{
-		sessionRepo: repo,
-		orderRepo:   orderRepo}
+		orderSessionRepo: orderSessionRepo,
+		storeOrderRepo:   storeOrderRepo}
 }
 
 func toOrderInSessionResponse(order *domain.StoreOrder) response.AdminOrderInSessionResponse {
@@ -40,12 +40,12 @@ func toOrderInSessionResponse(order *domain.StoreOrder) response.AdminOrderInSes
 
 func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.AdminOrderInSessionResponse, error) {
 	//var sessionID
-	_, err := a.sessionRepo.FindById(sessionID)
+	_, err := a.orderSessionRepo.FindById(sessionID)
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
 	//mapping to orderSessionResponse
-	orders, err := a.orderRepo.FindBySessionID(sessionID)
+	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
 	if err != nil {
 		return make([]response.AdminOrderInSessionResponse, 0), nil
 	}
@@ -58,7 +58,7 @@ func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.Adm
 
 func (a *adminOrderService) ApproveOrder(orderId uint) error {
 	//Find orderByID
-	order, err := a.orderRepo.FindById(orderId)
+	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
 		return errors.New("order not found")
 	}
@@ -72,12 +72,12 @@ func (a *adminOrderService) ApproveOrder(orderId uint) error {
 	var now = time.Now()
 	order.ApproveAt = &now
 	//Save/Update
-	return a.orderRepo.Update(order)
+	return a.storeOrderRepo.Update(order)
 }
 
 func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	//Find orderByID
-	order, err := a.orderRepo.FindById(orderId)
+	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
 		return errors.New("order not found")
 	}
@@ -89,5 +89,5 @@ func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	order.Status = "DECLINED"
 	order.Note = reason
 	//Save/Update
-	return a.orderRepo.Update(order)
+	return a.storeOrderRepo.Update(order)
 }

@@ -53,7 +53,7 @@ func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": sessions})
 }
 
-// GetSessionById GET /api/admin/sessions/:id
+// GetSessionById GET /api/admin/sessions/:sessionId
 func (h *OrderSessionHandler) GetSessionById(c *gin.Context) {
 	//get id param
 	id, err := getIDParam(c, "id")
@@ -113,7 +113,7 @@ func (h *OrderSessionHandler) RemoveProductFromSession(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "product removed from session"})
 }
 
-// CloseSession PATCH /api/admin/sessions/:id/close
+// CloseSession PATCH /api/admin/sessions/:sessionId/close
 func (h *OrderSessionHandler) CloseSession(c *gin.Context) {
 	//get sessionID from url
 	sessionID, err := getIDParam(c, "id")

@@ -12,19 +12,19 @@ type OrderSessionProductRepository interface {
 	FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProducts, error)
 }
 
-type orderSessionProducts struct {
+type orderSessionProductRepository struct {
 	db *gorm.DB
 }
 
-func NewOrderSessionProducts(db *gorm.DB) OrderSessionProductRepository {
-	return &orderSessionProducts{db: db}
+func NewOrderSessionProductRepository(db *gorm.DB) OrderSessionProductRepository {
+	return &orderSessionProductRepository{db: db}
 }
 
-func (o *orderSessionProducts) Create(order *domain.OrderSessionProducts) error {
+func (o *orderSessionProductRepository) Create(order *domain.OrderSessionProducts) error {
 	return o.db.Create(order).Error
 }
 
-func (o *orderSessionProducts) FindBySessionId(sessionId uint) ([]*domain.OrderSessionProducts, error) {
+func (o *orderSessionProductRepository) FindBySessionId(sessionId uint) ([]*domain.OrderSessionProducts, error) {
 	var order []*domain.OrderSessionProducts
 	err := o.db.Where("session_id = ?", sessionId).Find(&order).Error
 	if err != nil {
@@ -33,11 +33,11 @@ func (o *orderSessionProducts) FindBySessionId(sessionId uint) ([]*domain.OrderS
 	return order, nil
 }
 
-func (o *orderSessionProducts) Delete(id uint) error {
+func (o *orderSessionProductRepository) Delete(id uint) error {
 	return o.db.Delete(&domain.OrderSessionProducts{}, id).Error
 }
 
-func (o *orderSessionProducts) FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProducts, error) {
+func (o *orderSessionProductRepository) FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProducts, error) {
 	var order domain.OrderSessionProducts
 	err := o.db.Where("session_id = ? and product_id = ?", sessionID, productID).First(&order).Error
 	if err != nil {

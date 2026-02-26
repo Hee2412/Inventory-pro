@@ -18,9 +18,9 @@ type OrderSessionService interface {
 }
 
 type orderSessionService struct {
-	repo               repository.OrderSessionRepository
-	productRepo        repository.ProductRepository
-	sessionProductRepo repository.OrderSessionProductRepository
+	orderSessionRepo        repository.OrderSessionRepository
+	productRepo             repository.ProductRepository
+	orderSessionProductRepo repository.OrderSessionProductRepository
 }
 
 func NewOrderSessionService(
@@ -29,9 +29,9 @@ func NewOrderSessionService(
 	sessionProductRepo repository.OrderSessionProductRepository,
 ) OrderSessionService {
 	return &orderSessionService{
-		repo:               repo,
-		productRepo:        productRepo,
-		sessionProductRepo: sessionProductRepo}
+		orderSessionRepo:        repo,
+		productRepo:             productRepo,
+		orderSessionProductRepo: sessionProductRepo}
 }
 
 func toOrderSessionResponse(order *domain.OrderSession) response.OrderSessionResponse {
@@ -57,7 +57,7 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 		DeliveryDate: req.DeliveryDate,
 		CreatedBy:    createdBy,
 	}
-	err := o.repo.Create(newOrderSession)
+	err := o.orderSessionRepo.Create(newOrderSession)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 }
 
 func (o *orderSessionService) GetAllSessions() ([]response.OrderSessionResponse, error) {
-	sessions, err := o.repo.FindAll()
+	sessions, err := o.orderSessionRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -79,12 +79,12 @@ func (o *orderSessionService) GetAllSessions() ([]response.OrderSessionResponse,
 
 func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error) {
 	//check session
-	session, err := o.repo.FindById(sessionId)
+	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
 	//check product in session
-	sessionProduct, err := o.sessionProductRepo.FindBySessionId(sessionId)
+	sessionProduct, err := o.orderSessionProductRepo.FindBySessionId(sessionId)
 	if err != nil {
 		//create blank slice if nothing
 		return &response.OrderSessionDetailResponse{
@@ -108,7 +108,7 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 }
 
 func (o *orderSessionService) AddProductToSession(req request.AddProductToSessionRequest) error {
-	session, err := o.repo.FindById(req.SessionID)
+	session, err := o.orderSessionRepo.FindById(req.SessionID)
 	if err != nil {
 		return errors.New("session not found")
 	}
@@ -119,7 +119,7 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 	if errs != nil {
 		return errors.New("product not found")
 	}
-	existing, _ := o.sessionProductRepo.FindBySessionAndProduct(session.ID, req.ProductID)
+	existing, _ := o.orderSessionProductRepo.FindBySessionAndProduct(session.ID, req.ProductID)
 	if existing != nil {
 		return errors.New("product already exists")
 	}
@@ -127,11 +127,11 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 		SessionID: session.ID,
 		ProductID: req.ProductID,
 	}
-	return o.sessionProductRepo.Create(sessionProduct)
+	return o.orderSessionProductRepo.Create(sessionProduct)
 }
 
 func (o *orderSessionService) RemoveProductFromSession(sessionId uint, productId uint) error {
-	session, err := o.repo.FindById(sessionId)
+	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
 		return errors.New("session not found")
 	}
@@ -142,15 +142,15 @@ func (o *orderSessionService) RemoveProductFromSession(sessionId uint, productId
 	if err != nil {
 		return errors.New("product not found")
 	}
-	sessionProduct, err := o.sessionProductRepo.FindBySessionAndProduct(sessionId, productId)
+	sessionProduct, err := o.orderSessionProductRepo.FindBySessionAndProduct(sessionId, productId)
 	if err != nil {
 		return errors.New("product not found in session")
 	}
-	return o.sessionProductRepo.Delete(sessionProduct.ID)
+	return o.orderSessionProductRepo.Delete(sessionProduct.ID)
 }
 
 func (o *orderSessionService) CloseSession(sessionId uint) error {
-	session, err := o.repo.FindById(sessionId)
+	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
 		return errors.New("session not found")
 	}
@@ -158,5 +158,5 @@ func (o *orderSessionService) CloseSession(sessionId uint) error {
 		return errors.New("session is closed")
 	}
 	session.Status = "CLOSED"
-	return o.repo.Update(session)
+	return o.orderSessionRepo.Update(session)
 }

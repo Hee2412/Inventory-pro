@@ -19,16 +19,33 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect database", err)
 	}
-	_ = db.AutoMigrate(&domain.User{}, &domain.Product{})
+	_ = db.AutoMigrate(
+		&domain.User{}, &domain.Product{},
+		&domain.StoreOrder{}, &domain.OrderSession{},
+		&domain.OrderSessionProducts{}, &domain.OrderItems{},
+	)
 
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
+	orderSessionRepo := repository.NewOrderSessionRepository(db)
+	orderSessionProductRepo := repository.NewOrderSessionProductRepository(db)
+	storeOrderRepo := repository.NewStoreOrderRepository(db)
+	storeOrderItemRepo := repository.NewStoreOrderItems(db)
+
 	authService := service.NewAuthService(userRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 	productService := service.NewProductService(productRepo)
 	productHandler := handler.NewProductHandler(productService)
+
+	orderSessionService := service.NewOrderSessionService(orderSessionRepo, productRepo, orderSessionProductRepo)
+	orderSessionHandler := handler.NewOrderSessionHandler(orderSessionService)
+	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo)
+	storeOrderHandler := handler.NewStoreOrderHandler(storeOrderService)
+	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo)
+	adminOrderHandler := handler.NewAdminOrderHandler(adminOrderService)
+
 	router := gin.Default()
 
 	router.GET("/health", func(c *gin.Context) {
@@ -46,10 +63,21 @@ func main() {
 	}
 
 	protected := router.Group("/api")
+	protected.Use(authMiddleware.Handler())
 	{
-		protected.GET("/me", authMiddleware.Handler(), authHandler.GetProfile)
-		protected.GET("/products", authMiddleware.Handler(), productHandler.GetAllProducts)
-		protected.GET("/products/:id", authMiddleware.Handler(), productHandler.GetProductById)
+		protected.GET("/me", authHandler.GetProfile)
+		protected.GET("/products", productHandler.GetAllProducts)
+		protected.GET("/products/:id", productHandler.GetProductById)
+	}
+
+	storeProtected := protected.Group("api/store")
+	storeProtected.Use(authMiddleware.Handler(), authMiddleware.RequireRoles("store"))
+	{
+		storeProtected.GET("/sessions/:sessionId/order", storeOrderHandler.GetOrCreateOrder)
+		storeProtected.PUT("/orders/:orderId/items", storeOrderHandler.UpdateOrder)
+		storeProtected.POST("/orders/:orderId/submit", storeOrderHandler.SubmitOrder)
+		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
+		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
 	}
 
 	adminRoutes := router.Group("/api/admin")
@@ -75,6 +103,18 @@ func main() {
 			adminProduct.PATCH("/:id/activate", productHandler.ActivateProduct)
 			adminProduct.DELETE("/:id", productHandler.DeleteProduct)
 		}
+		adminSession := adminRoutes.Group("/sessions")
+		{
+			adminSession.GET("/:sessionId/orders", adminOrderHandler.GetAllOrderInSession)
+			adminSession.POST("", orderSessionHandler.CreateSession)
+			adminSession.GET("", orderSessionHandler.GetAllSessions)
+			adminSession.GET("/:sessionId", orderSessionHandler.GetSessionById)
+			adminSession.POST("/products", orderSessionHandler.AddProductToSession)
+			adminSession.DELETE("/:sessionId/products/:productId", orderSessionHandler.RemoveProductFromSession)
+			adminSession.PATCH("/:sessionId/close", orderSessionHandler.CloseSession)
+		}
+		adminRoutes.POST("/orders/:orderId/approve", adminOrderHandler.ApproveOrder)
+		adminRoutes.POST("/orders/:orderId/decline", adminOrderHandler.DeclineOrder)
 	}
 
 	superAdminRoutes := router.Group("/api/superadmin")

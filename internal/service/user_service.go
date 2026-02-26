@@ -21,11 +21,11 @@ type UserService interface {
 }
 
 type userService struct {
-	repo repository.UserRepository
+	userRepo repository.UserRepository
 }
 
 func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+	return &userService{userRepo: repo}
 }
 func toUserResponse(user *domain.User) response.UserResponse {
 	return response.UserResponse{
@@ -40,7 +40,7 @@ func toUserResponse(user *domain.User) response.UserResponse {
 	}
 }
 func (s *userService) GetAllUsers() ([]response.UserResponse, error) {
-	user, err := s.repo.FindAll()
+	user, err := s.userRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *userService) GetAllUsers() ([]response.UserResponse, error) {
 	return result, nil
 }
 func (s *userService) GetUserById(userId uint) (*response.UserResponse, error) {
-	user, err := s.repo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (s *userService) GetUserById(userId uint) (*response.UserResponse, error) {
 	return &result, nil
 }
 func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) error {
-	user, err := s.repo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
@@ -82,10 +82,10 @@ func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) err
 	if req.Role != nil {
 		user.Role = *req.Role
 	}
-	return s.repo.Update(user)
+	return s.userRepo.Update(user)
 }
 func (s *userService) DeactivateUser(userId uint) error {
-	user, err := s.repo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
@@ -93,11 +93,11 @@ func (s *userService) DeactivateUser(userId uint) error {
 		return errors.New("user is not active")
 	}
 	user.IsActive = false
-	return s.repo.Update(user)
+	return s.userRepo.Update(user)
 }
 
 func (s *userService) ActivateUser(userId uint) error {
-	user, err := s.repo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
@@ -105,20 +105,20 @@ func (s *userService) ActivateUser(userId uint) error {
 		return errors.New("user is active")
 	}
 	user.IsActive = true
-	return s.repo.Update(user)
+	return s.userRepo.Update(user)
 }
 
 func (s *userService) DeleteUser(userId uint) error {
-	_, err := s.repo.FindById(userId)
+	_, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
-	return s.repo.Delete(userId)
+	return s.userRepo.Delete(userId)
 }
 func (s *userService) HardDeleteUser(userId uint) error {
-	_, err := s.repo.FindById(userId)
+	_, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
-	return s.repo.HardDelete(userId)
+	return s.userRepo.HardDelete(userId)
 }
