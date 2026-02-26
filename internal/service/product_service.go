@@ -84,7 +84,7 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 		Type:        req.Type,
 		OrderCycle:  req.OrderCycle,
 		AuditCycle:  req.AuditCycle,
-		IsActive:    req.IsActive,
+		IsActive:    true,
 	}
 	err := p.productRepo.Create(newProduct)
 	if err != nil {

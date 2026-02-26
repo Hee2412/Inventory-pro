@@ -56,7 +56,7 @@ func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
 // GetSessionById GET /api/admin/sessions/:sessionId
 func (h *OrderSessionHandler) GetSessionById(c *gin.Context) {
 	//get id param
-	id, err := getIDParam(c, "id")
+	id, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -116,7 +116,7 @@ func (h *OrderSessionHandler) RemoveProductFromSession(c *gin.Context) {
 // CloseSession PATCH /api/admin/sessions/:sessionId/close
 func (h *OrderSessionHandler) CloseSession(c *gin.Context) {
 	//get sessionID from url
-	sessionID, err := getIDParam(c, "id")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

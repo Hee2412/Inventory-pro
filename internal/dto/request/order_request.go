@@ -10,8 +10,8 @@ type CreateOrderSessionRequest struct {
 }
 
 type AddProductToSessionRequest struct {
-	SessionID uint `json:"session_id" binding:"required"`
-	ProductID uint `json:"product_id" binding:"required"`
+	SessionID uint   `json:"session_id" binding:"required"`
+	ProductID []uint `json:"product_id" binding:"required"`
 }
 
 type UpdateOrderItemRequest struct {

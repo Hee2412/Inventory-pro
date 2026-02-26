@@ -37,6 +37,7 @@ func toUserResponse(user *domain.User) response.UserResponse {
 		IsActive:  user.IsActive,
 		CreateAt:  user.CreatedAt,
 		LastLogin: user.LastLogin,
+		DeletedAt: user.DeletedAt,
 	}
 }
 func (s *userService) GetAllUsers() ([]response.UserResponse, error) {
@@ -109,16 +110,28 @@ func (s *userService) ActivateUser(userId uint) error {
 }
 
 func (s *userService) DeleteUser(userId uint) error {
-	_, err := s.userRepo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
 	}
+	if user.DeletedAt.Valid == true {
+		return errors.New("user is already deleted")
+	}
+	user.IsActive = false
+	err = s.userRepo.Update(user)
+	if err != nil {
+		return err
+	}
 	return s.userRepo.Delete(userId)
 }
+
 func (s *userService) HardDeleteUser(userId uint) error {
-	_, err := s.userRepo.FindById(userId)
+	user, err := s.userRepo.FindById(userId)
 	if err != nil {
 		return errors.New("user not found")
+	}
+	if user.DeletedAt.Valid == false {
+		return errors.New("this user is not deleted yet")
 	}
 	return s.userRepo.HardDelete(userId)
 }

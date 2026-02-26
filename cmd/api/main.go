@@ -22,7 +22,7 @@ func main() {
 	_ = db.AutoMigrate(
 		&domain.User{}, &domain.Product{},
 		&domain.StoreOrder{}, &domain.OrderSession{},
-		&domain.OrderSessionProducts{}, &domain.OrderItems{},
+		&domain.OrderSessionProduct{}, &domain.OrderItems{},
 	)
 
 	userRepo := repository.NewUserRepository(db)

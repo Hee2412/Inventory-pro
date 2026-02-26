@@ -3,7 +3,7 @@ package service
 import (
 	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/internal/dto"
+	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/jwt"
 	password2 "Inventory-pro/pkg/password"
@@ -12,7 +12,7 @@ import (
 
 type AuthService interface {
 	Login(username string, password string) (string, *domain.User, error)
-	Register(creatorRole string, req dto.RegisterRequest) error
+	Register(creatorRole string, req request.RegisterRequest) error
 	GetProfile(userId uint) (*domain.User, error)
 }
 type authService struct {
@@ -42,7 +42,7 @@ func (s *authService) Login(username string, password string) (string, *domain.U
 	return token, user, nil
 }
 
-func (s *authService) Register(creatorRole string, req dto.RegisterRequest) error {
+func (s *authService) Register(creatorRole string, req request.RegisterRequest) error {
 	if existingUser, _ := s.userRepo.FindByUsername(req.Username); existingUser != nil {
 		return errors.New("user already exists")
 	}

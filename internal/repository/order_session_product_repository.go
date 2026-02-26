@@ -6,10 +6,10 @@ import (
 )
 
 type OrderSessionProductRepository interface {
-	Create(order *domain.OrderSessionProducts) error
-	FindBySessionId(sessionId uint) ([]*domain.OrderSessionProducts, error)
+	Create(order []*domain.OrderSessionProduct) error
+	FindBySessionId(sessionId uint) ([]*domain.OrderSessionProduct, error)
 	Delete(id uint) error
-	FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProducts, error)
+	FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProduct, error)
 }
 
 type orderSessionProductRepository struct {
@@ -20,12 +20,12 @@ func NewOrderSessionProductRepository(db *gorm.DB) OrderSessionProductRepository
 	return &orderSessionProductRepository{db: db}
 }
 
-func (o *orderSessionProductRepository) Create(order *domain.OrderSessionProducts) error {
-	return o.db.Create(order).Error
+func (o *orderSessionProductRepository) Create(products []*domain.OrderSessionProduct) error {
+	return o.db.Create(products).Error
 }
 
-func (o *orderSessionProductRepository) FindBySessionId(sessionId uint) ([]*domain.OrderSessionProducts, error) {
-	var order []*domain.OrderSessionProducts
+func (o *orderSessionProductRepository) FindBySessionId(sessionId uint) ([]*domain.OrderSessionProduct, error) {
+	var order []*domain.OrderSessionProduct
 	err := o.db.Where("session_id = ?", sessionId).Find(&order).Error
 	if err != nil {
 		return nil, err
@@ -34,11 +34,11 @@ func (o *orderSessionProductRepository) FindBySessionId(sessionId uint) ([]*doma
 }
 
 func (o *orderSessionProductRepository) Delete(id uint) error {
-	return o.db.Delete(&domain.OrderSessionProducts{}, id).Error
+	return o.db.Delete(&domain.OrderSessionProduct{}, id).Error
 }
 
-func (o *orderSessionProductRepository) FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProducts, error) {
-	var order domain.OrderSessionProducts
+func (o *orderSessionProductRepository) FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProduct, error) {
+	var order domain.OrderSessionProduct
 	err := o.db.Where("session_id = ? and product_id = ?", sessionID, productID).First(&order).Error
 	if err != nil {
 		return nil, err

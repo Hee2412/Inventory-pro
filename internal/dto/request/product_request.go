@@ -19,5 +19,4 @@ type CreateProductRequest struct {
 	Type        string  `json:"type" binding:"required"`
 	OrderCycle  string  `json:"order_cycle" binding:"required"`
 	AuditCycle  string  `json:"audit_cycle" binding:"required"`
-	IsActive    bool    `json:"is_active"`
 }

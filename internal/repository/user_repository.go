@@ -33,7 +33,7 @@ func (u *userRepository) Create(user *domain.User) error {
 
 func (u *userRepository) FindById(id uint) (*domain.User, error) {
 	var user domain.User
-	err := u.db.Where("id=?", id).First(&user).Error
+	err := u.db.Unscoped().Where("id=?", id).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (u *userRepository) FindByUsername(username string) (*domain.User, error) {
 
 func (u *userRepository) FindAll() ([]*domain.User, error) {
 	var users []*domain.User
-	err := u.db.Find(&users).Error
+	err := u.db.Unscoped().Find(&users).Error
 	if err != nil {
 		return nil, err
 	}

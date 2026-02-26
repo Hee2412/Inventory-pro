@@ -115,19 +115,25 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 	if session.Status != "OPEN" {
 		return errors.New("session is closed")
 	}
-	_, errs := o.productRepo.FindById(req.ProductID)
-	if errs != nil {
-		return errors.New("product not found")
+	var sessionProduct []*domain.OrderSessionProduct
+	for _, productID := range req.ProductID {
+		_, err := o.productRepo.FindById(productID)
+		if err != nil {
+			continue
+		}
+		existing, _ := o.orderSessionProductRepo.FindBySessionAndProduct(session.ID, productID)
+		if existing != nil {
+			continue
+		}
+		sessionProduct = append(sessionProduct, &domain.OrderSessionProduct{
+			SessionID: session.ID,
+			ProductID: productID,
+		})
 	}
-	existing, _ := o.orderSessionProductRepo.FindBySessionAndProduct(session.ID, req.ProductID)
-	if existing != nil {
-		return errors.New("product already exists")
+	if len(sessionProduct) > 0 {
+		return o.orderSessionProductRepo.Create(sessionProduct)
 	}
-	sessionProduct := &domain.OrderSessionProducts{
-		SessionID: session.ID,
-		ProductID: req.ProductID,
-	}
-	return o.orderSessionProductRepo.Create(sessionProduct)
+	return nil
 }
 
 func (o *orderSessionService) RemoveProductFromSession(sessionId uint, productId uint) error {

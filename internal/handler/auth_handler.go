@@ -1,7 +1,8 @@
 package handler
 
 import (
-	"Inventory-pro/internal/dto"
+	"Inventory-pro/internal/dto/request"
+	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -16,7 +17,7 @@ func NewAuthHandler(authServer service.AuthService) *AuthHandler {
 }
 
 func (handler *AuthHandler) Login(c *gin.Context) {
-	var req dto.LoginRequest
+	var req request.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
@@ -28,7 +29,7 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, dto.LoginResponse{
+	c.JSON(http.StatusOK, response.LoginResponse{
 		Token:     token,
 		ID:        user.ID,
 		Username:  user.Username,
@@ -40,7 +41,7 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 }
 
 func (handler *AuthHandler) Register(c *gin.Context) {
-	var req dto.RegisterRequest
+	var req request.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
