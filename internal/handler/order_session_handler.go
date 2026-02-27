@@ -3,6 +3,7 @@ package handler
 import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/service"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -80,13 +81,16 @@ func (h *OrderSessionHandler) AddProductToSession(c *gin.Context) {
 		return
 	}
 	//call service
-	err := h.service.AddProductToSession(req)
+	result, err := h.service.AddProductToSession(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	//response
-	c.JSON(http.StatusCreated, gin.H{"message": "product added to session"})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": fmt.Sprintf("Added %d products", result.Added),
+		"data":    result,
+	})
 }
 
 // RemoveProductFromSession DELETE /api/admin/sessions/:sessionId/products/:productId

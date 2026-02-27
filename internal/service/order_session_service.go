@@ -6,13 +6,14 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
 	"errors"
+	"fmt"
 )
 
 type OrderSessionService interface {
 	CreateSession(req request.CreateOrderSessionRequest, createBy uint) (*response.OrderSessionResponse, error)
 	GetAllSessions() ([]response.OrderSessionResponse, error)
 	GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error)
-	AddProductToSession(req request.AddProductToSessionRequest) error
+	AddProductToSession(req request.AddProductToSessionRequest) (*response.AddProductResponse, error)
 	RemoveProductFromSession(sessionId uint, productId uint) error
 	CloseSession(sessionId uint) error
 }
@@ -107,22 +108,27 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 	}, nil
 }
 
-func (o *orderSessionService) AddProductToSession(req request.AddProductToSessionRequest) error {
+func (o *orderSessionService) AddProductToSession(req request.AddProductToSessionRequest) (*response.AddProductResponse, error) {
 	session, err := o.orderSessionRepo.FindById(req.SessionID)
 	if err != nil {
-		return errors.New("session not found")
+		return nil, errors.New("session not found")
 	}
 	if session.Status != "OPEN" {
-		return errors.New("session is closed")
+		return nil, errors.New("session is closed")
 	}
+
+	var errs []string
 	var sessionProduct []*domain.OrderSessionProduct
+
 	for _, productID := range req.ProductID {
 		_, err := o.productRepo.FindById(productID)
 		if err != nil {
+			errs = append(errs, fmt.Sprintf("product id %d not found", productID))
 			continue
 		}
 		existing, _ := o.orderSessionProductRepo.FindBySessionAndProduct(session.ID, productID)
 		if existing != nil {
+			errs = append(errs, fmt.Sprintf("product id %d already exists", productID))
 			continue
 		}
 		sessionProduct = append(sessionProduct, &domain.OrderSessionProduct{
@@ -131,9 +137,16 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 		})
 	}
 	if len(sessionProduct) > 0 {
-		return o.orderSessionProductRepo.Create(sessionProduct)
+		err := o.orderSessionProductRepo.Create(sessionProduct...)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return nil
+	return &response.AddProductResponse{
+		Added:   len(sessionProduct),
+		Skipped: len(errs),
+		Errs:    errs,
+	}, nil
 }
 
 func (o *orderSessionService) RemoveProductFromSession(sessionId uint, productId uint) error {

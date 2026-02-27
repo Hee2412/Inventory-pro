@@ -48,3 +48,9 @@ type AdminOrderInSessionResponse struct {
 	SubmittedAt *time.Time `json:"submitted_at"`
 	CreatedAt   time.Time  `json:"created_at"`
 }
+
+type AddProductResponse struct {
+	Added   int      `json:"added"`
+	Skipped int      `json:"skipped"`
+	Errs    []string `json:"errs,omitempty"`
+}

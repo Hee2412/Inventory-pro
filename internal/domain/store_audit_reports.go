@@ -4,9 +4,11 @@ import "time"
 
 type StoreAuditReport struct {
 	ID          uint      `gorm:"primary_key" json:"id"`
-	Session     uint      `json:"session_id"`
-	Store       uint      `son:"store_id"`
-	Product     uint      `json:"product_id"`
+	SessionID   uint      `json:"session_id"`
+	StoreID     uint      `json:"store_id"`
+	ProductID   uint      `json:"product_id"`
+	Product     Product   `gorm:"foreignKey:ProductID" json:"product,omitempty"`
+	Store       *User     `gorm:"foreignKey:StoreID" json:"store,omitempty"`
 	SystemStock float32   `json:"system_stock"`
 	ActualStock float32   `json:"actual_stock"`
 	Variance    float32   `json:"variance"`

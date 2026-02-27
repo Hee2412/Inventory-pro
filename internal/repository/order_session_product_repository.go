@@ -6,7 +6,7 @@ import (
 )
 
 type OrderSessionProductRepository interface {
-	Create(order []*domain.OrderSessionProduct) error
+	Create(order ...*domain.OrderSessionProduct) error
 	FindBySessionId(sessionId uint) ([]*domain.OrderSessionProduct, error)
 	Delete(id uint) error
 	FindBySessionAndProduct(sessionID uint, productID uint) (*domain.OrderSessionProduct, error)
@@ -20,7 +20,7 @@ func NewOrderSessionProductRepository(db *gorm.DB) OrderSessionProductRepository
 	return &orderSessionProductRepository{db: db}
 }
 
-func (o *orderSessionProductRepository) Create(products []*domain.OrderSessionProduct) error {
+func (o *orderSessionProductRepository) Create(products ...*domain.OrderSessionProduct) error {
 	return o.db.Create(products).Error
 }
 
