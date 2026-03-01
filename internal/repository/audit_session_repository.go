@@ -66,7 +66,7 @@ func (a *auditSessionRepository) DeleteById(id uint) error {
 }
 
 func (a *auditSessionRepository) HardDelete(id uint) error {
-	return a.db.Unscoped().Delete(domain.AuditSession{}).Error
+	return a.db.Unscoped().Delete(&domain.AuditSession{}, id).Error
 }
 
 func (a *auditSessionRepository) AdminFindById(id uint) (*domain.AuditSession, error) {

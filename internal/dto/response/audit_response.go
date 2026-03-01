@@ -12,24 +12,29 @@ type AuditSessionResponse struct {
 }
 
 type AuditSessionDetailsResponse struct {
-	SessionInfo AuditSessionResponse       `json:"session_info"`
-	Report      []StoreAuditReportResponse `json:"report"`
+	SessionInfo AuditSessionResponse        `json:"session_info"`
+	Report      []StoreAuditSummaryResponse `json:"report"`
 }
 
-type StoreAuditReportResponse struct {
-	StoreId     uint    `json:"store_id"`
-	StoreName   string  `json:"store_name"`
-	ProductName string  `json:"product_name"`
-	SystemStock float32 `json:"system_stock"`
-	ActualStock float32 `json:"actual_stock"`
-	Variance    float32 `json:"variance"`
-	Status      string  `json:"status"`
+type StoreAuditSummaryResponse struct {
+	StoreId   uint   `json:"store_id"`
+	StoreName string `json:"store_name"`
+	Status    string `json:"status"`
 }
-type AuditReportDetailsResponse struct {
-	SessionTitle string                     `json:"session_title"`
-	StoreName    string                     `json:"store_name"`
-	TotalItems   int                        `json:"total_items"`
-	TotalOverlap int                        `json:"total_overlap"`
-	SubmittedAt  time.Time                  `json:"submitted_at"`
-	Items        []StoreAuditReportResponse `json:"items"`
+type AuditReportItemResponse struct {
+	ProductID   uint    `json:"product_id"`
+	ProductName string  `json:"product_name"`
+	SystemStock float64 `json:"system_stock"`
+	ActualStock float64 `json:"actual_stock"`
+	Variance    float64 `json:"variance"`
+}
+type AuditReportDetailResponse struct {
+	SessionTitle  string                    `json:"session_title"`
+	StoreName     string                    `json:"store_name"`
+	StoreID       uint                      `json:"store_id"`
+	TotalItems    int                       `json:"total_items"`
+	TotalVariance float64                   `json:"total_variance"`
+	SubmittedAt   *time.Time                `json:"submitted_at,omitempty"`
+	Status        string                    `json:"status"`
+	Items         []AuditReportItemResponse `json:"items"`
 }

@@ -21,7 +21,13 @@ func NewOrderSessionProductRepository(db *gorm.DB) OrderSessionProductRepository
 }
 
 func (o *orderSessionProductRepository) Create(products ...*domain.OrderSessionProduct) error {
-	return o.db.Create(products).Error
+	if len(products) == 0 {
+		return nil
+	}
+	if len(products) == 1 {
+		return o.db.Create(products[0]).Error
+	}
+	return o.db.CreateInBatches(products, 100).Error
 }
 
 func (o *orderSessionProductRepository) FindBySessionId(sessionId uint) ([]*domain.OrderSessionProduct, error) {

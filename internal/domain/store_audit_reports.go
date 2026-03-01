@@ -9,9 +9,9 @@ type StoreAuditReport struct {
 	ProductID   uint      `json:"product_id"`
 	Product     Product   `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 	Store       *User     `gorm:"foreignKey:StoreID" json:"store,omitempty"`
-	SystemStock float32   `json:"system_stock"`
-	ActualStock float32   `json:"actual_stock"`
-	Variance    float32   `json:"variance"`
+	SystemStock float64   `json:"system_stock"`
+	ActualStock float64   `json:"actual_stock"`
+	Variance    float64   `json:"variance"`
 	Status      string    `gorm:"size:50" json:"status"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
