@@ -17,6 +17,7 @@ type AuditSessionService interface {
 	AddProductToAudit(req request.AddProductToAuditRequest) (*response.AddProductResponse, error)
 	RemoveProductFromAudit(auditSessionID uint, productID uint) error
 	CloseAuditSession(auditSessionID uint) error
+	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
 }
 
 type auditSessionService struct {
@@ -198,7 +199,7 @@ func (a *auditSessionService) RemoveProductFromAudit(auditSessionID uint, produc
 	}
 	//check status
 	if session.Status == "CLOSED" {
-		return errors.New("session is CLOSE")
+		return errors.New("session is closed")
 	}
 	//check product
 	_, err = a.productRepo.FindById(productID)
@@ -230,11 +231,36 @@ func (a *auditSessionService) CloseAuditSession(auditSessionID uint) error {
 		return errors.New("session not found")
 	}
 	if session.Status == "CLOSED" {
-		return errors.New("session is CLOSE")
+		return errors.New("session is closed")
 	}
 	if session.Status != "OPEN" {
 		return errors.New("can only close the open session")
 	}
 	session.Status = "CLOSED"
+	return a.auditSessionRepo.Update(session)
+}
+
+func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error {
+	//check session
+	session, err := a.auditSessionRepo.FindById(sessionID)
+	if err != nil {
+		return errors.New("session not found")
+	}
+	if session.Status == "CLOSED" {
+		return errors.New("can't update closed session")
+	}
+	//call service
+	if req.Title != nil {
+		session.Title = *req.Title
+	}
+	if req.Status != nil {
+		session.Status = *req.Status
+	}
+	if req.EndDate != nil {
+		session.EndDate = *req.EndDate
+	}
+	if req.AuditType != nil {
+		session.AuditType = *req.AuditType
+	}
 	return a.auditSessionRepo.Update(session)
 }

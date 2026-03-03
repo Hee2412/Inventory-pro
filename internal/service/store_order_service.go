@@ -35,7 +35,7 @@ func NewStoreOrderService(
 	}
 }
 
-func toOrderItemResponse(items []domain.OrderItems) []response.OrderItemResponse {
+func toOrderItemResponse(items []*domain.OrderItems) []response.OrderItemResponse {
 	result := make([]response.OrderItemResponse, 0)
 	for _, item := range items {
 		result = append(result, response.OrderItemResponse{
@@ -105,7 +105,7 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 	var targetItem *domain.OrderItems
 	for i, item := range items {
 		if item.ProductID == req.ProductID {
-			targetItem = &items[i]
+			targetItem = items[i]
 			break
 		}
 	}

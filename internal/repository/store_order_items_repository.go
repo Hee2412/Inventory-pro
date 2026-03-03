@@ -10,7 +10,7 @@ type StoreOrderItemRepository interface {
 	FindById(id uint) (*domain.OrderItems, error)
 	Update(order *domain.OrderItems) error
 	Delete(id uint) error
-	FindByOrderId(orderId uint) ([]domain.OrderItems, error)
+	FindByOrderId(orderId uint) ([]*domain.OrderItems, error)
 	DeleteByOrderId(orderId uint) error
 }
 
@@ -43,8 +43,8 @@ func (s *storeOrderItems) Delete(id uint) error {
 	return s.db.Delete(&domain.OrderItems{}, id).Error
 }
 
-func (s *storeOrderItems) FindByOrderId(orderId uint) ([]domain.OrderItems, error) {
-	var order []domain.OrderItems
+func (s *storeOrderItems) FindByOrderId(orderId uint) ([]*domain.OrderItems, error) {
+	var order []*domain.OrderItems
 	err := s.db.Where("order_id = ?", orderId).Find(&order).Error
 	if err != nil {
 		return nil, err

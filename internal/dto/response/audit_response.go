@@ -21,20 +21,30 @@ type StoreAuditSummaryResponse struct {
 	StoreName string `json:"store_name"`
 	Status    string `json:"status"`
 }
-type AuditReportItemResponse struct {
+type AuditItemsResponse struct {
 	ProductID   uint    `json:"product_id"`
 	ProductName string  `json:"product_name"`
 	SystemStock float64 `json:"system_stock"`
 	ActualStock float64 `json:"actual_stock"`
 	Variance    float64 `json:"variance"`
 }
-type AuditReportDetailResponse struct {
-	SessionTitle  string                    `json:"session_title"`
-	StoreName     string                    `json:"store_name"`
-	StoreID       uint                      `json:"store_id"`
-	TotalItems    int                       `json:"total_items"`
-	TotalVariance float64                   `json:"total_variance"`
-	SubmittedAt   *time.Time                `json:"submitted_at,omitempty"`
-	Status        string                    `json:"status"`
-	Items         []AuditReportItemResponse `json:"items"`
+
+type AuditReportItemDetailResponse struct {
+	SessionTitle string               `json:"session_title"`
+	StoreName    string               `json:"store_name"`
+	TotalItems   int                  `json:"total_items"`
+	Items        []AuditItemsResponse `json:"items"`
+}
+
+type AuditSummaryResponse struct {
+	SessionTitle     string       `json:"session_title"`
+	TotalStores      int          `json:"total_stores"`
+	StoresSubmitted  int          `json:"stores_submitted"`
+	TotalProducts    int          `json:"total_products"`
+	StoresWithIssues []StoreIssue `json:"stores_with_issues"`
+}
+
+type StoreIssue struct {
+	StoreID   uint   `json:"store_id"`
+	StoreName string `json:"store_name"`
 }

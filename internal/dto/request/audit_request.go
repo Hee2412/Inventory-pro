@@ -27,10 +27,14 @@ type AuditReportItem struct {
 	ActualStock float64 `json:"actual_stock"`
 }
 
-type UpdateAuditItemRequest struct {
-	AuditSessionID uint      `json:"audit_session_id" `
-	Title          string    `json:"title"`
-	AuditType      string    `json:"audit_type"`
-	EndDate        time.Time `json:"end_date"`
-	Status         string    `json:"status" `
+type UpdateAuditSessionRequest struct {
+	Title     *string    `json:"title"`
+	AuditType *string    `json:"audit_type"`
+	EndDate   *time.Time `json:"end_date"`
+	Status    *string    `json:"status" `
+}
+
+type UpdateAuditItem struct {
+	ProductID   uint    `json:"product_id" binding:"required"`
+	ActualStock float64 `json:"actual_stock"`
 }

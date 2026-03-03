@@ -8,13 +8,14 @@ import (
 type StoreAuditReportRepository interface {
 	Create(storeAuditReport ...*domain.StoreAuditReport) error
 	FindById(id uint) (*domain.StoreAuditReport, error)
-	FindByAuditSessionAndStore(storeId uint, auditSession uint) (*domain.StoreAuditReport, error)
+	FindByAuditSessionAndStore(storeId uint, auditSession uint) ([]*domain.StoreAuditReport, error)
 	FindByAuditSessionID(sessionId uint) ([]*domain.StoreAuditReport, error)
 	FindBySessionAndProduct(sessionId uint, productId uint) ([]*domain.StoreAuditReport, error)
 	FindByStoreId(storeId uint) ([]*domain.StoreAuditReport, error)
 	Update(storeAuditReport *domain.StoreAuditReport) error
 	FindBySessionStoreAndProduct(sessionID uint, storeID uint, productID uint) (*domain.StoreAuditReport, error)
 	Delete(id uint) error
+	UpdateStatusByStore(sessionID, storeID uint, data map[string]interface{}) error
 }
 
 type storeAuditRepository struct {
@@ -47,13 +48,13 @@ func (s *storeAuditRepository) FindById(id uint) (*domain.StoreAuditReport, erro
 }
 
 // FindByAuditSessionAndStore Response 1 record (report) by store x in session y
-func (s *storeAuditRepository) FindByAuditSessionAndStore(storeId uint, sessionId uint) (*domain.StoreAuditReport, error) {
-	var report domain.StoreAuditReport
-	err := s.db.Where("store_id = ? AND session_id = ?", storeId, sessionId).First(&report).Error
+func (s *storeAuditRepository) FindByAuditSessionAndStore(storeId uint, sessionId uint) ([]*domain.StoreAuditReport, error) {
+	var report []*domain.StoreAuditReport
+	err := s.db.Where("store_id = ? AND session_id = ?", storeId, sessionId).Find(&report).Error
 	if err != nil {
 		return nil, err
 	}
-	return &report, nil
+	return report, nil
 }
 
 // FindByAuditSessionID Find [] all store in 1 session
@@ -100,4 +101,10 @@ func (s *storeAuditRepository) Update(storeAuditReport *domain.StoreAuditReport)
 
 func (s *storeAuditRepository) Delete(id uint) error {
 	return s.db.Delete(&domain.StoreAuditReport{}, id).Error
+}
+
+func (s *storeAuditRepository) UpdateStatusByStore(sessionID, storeID uint, data map[string]interface{}) error {
+	return s.db.Model(&domain.StoreAuditReport{}).
+		Where("audit_session_id = ? AND store_id = ?", sessionID, storeID).
+		Updates(data).Error
 }
