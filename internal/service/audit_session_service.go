@@ -11,11 +11,11 @@ import (
 )
 
 type AuditSessionService interface {
-	CreateAuditSession(req request.CreateAuditSessionRequest) (*response.AuditSessionResponse, error)
+	CreateAuditSession(req request.CreateAuditSessionRequest, createdBy uint) (*response.AuditSessionResponse, error)
 	GetAllAuditSessions() ([]response.AuditSessionResponse, error)
 	GetAuditSessionByID(sessionID uint) (*response.AuditSessionDetailsResponse, error)
 	AddProductToAudit(req request.AddProductToAuditRequest) (*response.AddProductResponse, error)
-	RemoveProductFromAudit(auditSessionID uint, productID uint) error
+	RemoveProductFromAudit(sessionID uint, productID uint) error
 	CloseAuditSession(auditSessionID uint) error
 	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
 }
@@ -47,10 +47,11 @@ func toAuditSessionResponse(session *domain.AuditSession) response.AuditSessionR
 		StartDate: session.StartDate,
 		EndDate:   session.EndDate,
 		Status:    session.Status,
+		CreatedBy: session.CreatedBy,
 	}
 }
 
-func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionRequest) (*response.AuditSessionResponse, error) {
+func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionRequest, createdBy uint) (*response.AuditSessionResponse, error) {
 	if req.EndDate.Before(req.StartDate) {
 		return nil, errors.New("the end date cannot be before the start date")
 	}
@@ -63,6 +64,7 @@ func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionR
 		StartDate: req.StartDate,
 		EndDate:   req.EndDate,
 		Status:    "OPEN",
+		CreatedBy: createdBy,
 	}
 	err := a.auditSessionRepo.Create(newAuditSession)
 	if err != nil {
@@ -191,9 +193,9 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 	}, nil
 }
 
-func (a *auditSessionService) RemoveProductFromAudit(auditSessionID uint, productID uint) error {
+func (a *auditSessionService) RemoveProductFromAudit(sessionID uint, productID uint) error {
 	//check session
-	session, err := a.auditSessionRepo.FindById(auditSessionID)
+	session, err := a.auditSessionRepo.FindById(sessionID)
 	if err != nil {
 		return errors.New("session not found")
 	}
@@ -208,7 +210,7 @@ func (a *auditSessionService) RemoveProductFromAudit(auditSessionID uint, produc
 	}
 	//find all reports that have productID in session
 	reports, err := a.storeAuditRepo.FindBySessionAndProduct(
-		auditSessionID, productID)
+		sessionID, productID)
 	if err != nil || len(reports) == 0 {
 		return errors.New("product not found in this session")
 	}

@@ -23,6 +23,7 @@ func main() {
 		&domain.User{}, &domain.Product{},
 		&domain.StoreOrder{}, &domain.OrderSession{},
 		&domain.OrderSessionProduct{}, &domain.OrderItems{},
+		&domain.AuditSession{}, &domain.StoreAuditReport{},
 	)
 
 	userRepo := repository.NewUserRepository(db)
@@ -31,6 +32,8 @@ func main() {
 	orderSessionProductRepo := repository.NewOrderSessionProductRepository(db)
 	storeOrderRepo := repository.NewStoreOrderRepository(db)
 	storeOrderItemRepo := repository.NewStoreOrderItems(db)
+	auditSessionRepo := repository.NewAuditSessionRepository(db)
+	storeAuditRepo := repository.NewStoreAuditRepository(db)
 
 	authService := service.NewAuthService(userRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
@@ -45,6 +48,13 @@ func main() {
 	storeOrderHandler := handler.NewStoreOrderHandler(storeOrderService)
 	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo)
 	adminOrderHandler := handler.NewAdminOrderHandler(adminOrderService)
+
+	auditSessionService := service.NewAuditSessionService(auditSessionRepo, storeAuditRepo, userRepo, productRepo)
+	auditSessionHandler := handler.NewAuditSessionHandler(auditSessionService)
+	storeAuditService := service.NewStoreAuditService(auditSessionRepo, storeAuditRepo, userRepo)
+	storeAuditHandler := handler.NewStoreAuditHandler(storeAuditService)
+	superadminAuditService := service.NewSuperAdminAuditService(auditSessionRepo, storeAuditRepo, userRepo)
+	superadminAuditHandler := handler.NewSuperadminAuditHandler(superadminAuditService)
 
 	router := gin.Default()
 
@@ -78,6 +88,10 @@ func main() {
 		storeProtected.POST("/orders/:orderId/submit", storeOrderHandler.SubmitOrder)
 		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
 		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
+		storeProtected.PUT("/audit-sessions/:sessionId/items", storeAuditHandler.UpdateAuditItem)
+		storeProtected.POST("/audit-sessions/:sessionId/submit", storeAuditHandler.SubmitAuditReport)
+		storeProtected.GET("/audit-reports", storeAuditHandler.GetMyAuditReport)
+		storeProtected.GET("/store/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
 	}
 
 	adminRoutes := router.Group("/api/admin")
@@ -93,7 +107,6 @@ func main() {
 			adminUser.PATCH("/:id/activate", userHandler.ActivateUser)
 			adminUser.DELETE("/:id", userHandler.DeleteUser)
 		}
-
 		adminProduct := adminRoutes.Group("/products")
 		{
 			adminProduct.GET("", productHandler.GetAllProductsForAdmin)
@@ -113,6 +126,16 @@ func main() {
 			adminSession.DELETE("/:sessionId/products/:productId", orderSessionHandler.RemoveProductFromSession)
 			adminSession.PATCH("/:sessionId/close", orderSessionHandler.CloseSession)
 		}
+		adminAudit := adminRoutes.Group("/audit-sessions")
+		{
+			adminAudit.POST("", auditSessionHandler.CreateAuditSession)
+			adminAudit.GET("", auditSessionHandler.GetAllAuditSession)
+			adminAudit.GET("/id", auditSessionHandler.GetAuditSessionByID)
+			adminAudit.POST("/products", auditSessionHandler.AddProductToAudit)
+			adminAudit.DELETE("/:sessionId/products/:productId", auditSessionHandler.RemoveProductFromAudit)
+			adminAudit.PATCH("/:id/close", auditSessionHandler.CloseAuditSession)
+			adminAudit.PUT("/:id", auditSessionHandler.UpdateAuditSession)
+		}
 		adminRoutes.POST("/orders/:orderId/approve", adminOrderHandler.ApproveOrder)
 		adminRoutes.POST("/orders/:orderId/decline", adminOrderHandler.DeclineOrder)
 	}
@@ -123,6 +146,15 @@ func main() {
 	{
 		superAdminRoutes.DELETE("/users/:id/hard", userHandler.HardDeleteUser)
 		superAdminRoutes.DELETE("/products/:id/hard", productHandler.HardDeleteProduct)
+
+		superAudit := superAdminRoutes.Group("/audit-sessions")
+		{
+			superAudit.GET("/:sessionId/reports", superadminAuditHandler.GetAllReportsInSession)
+			superAudit.GET("/:sessionId/stores/:storeId", superadminAuditHandler.GetReportDetail)
+			superAudit.GET("/:sessionId/summary", superadminAuditHandler.GetAuditSummary)
+			superAudit.POST("/:sessionId/stores/:storeId/approve", superadminAuditHandler.ApproveStoreReport)
+			superAudit.POST("/:sessionId/stores/:storeId/decline", superadminAuditHandler.DeclineStoreReport)
+		}
 	}
 
 	log.Printf("Server started on http://localhost:%s", cfg.Port)

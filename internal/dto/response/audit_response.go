@@ -9,6 +9,7 @@ type AuditSessionResponse struct {
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Status    string    `json:"status"`
+	CreatedBy uint      `json:"created_by"`
 }
 
 type AuditSessionDetailsResponse struct {
@@ -40,11 +41,15 @@ type AuditSummaryResponse struct {
 	SessionTitle     string       `json:"session_title"`
 	TotalStores      int          `json:"total_stores"`
 	StoresSubmitted  int          `json:"stores_submitted"`
+	StoreDraft       int          `json:"store_draft"`
 	TotalProducts    int          `json:"total_products"`
+	TotalVariance    float64      `json:"total_variance"`
 	StoresWithIssues []StoreIssue `json:"stores_with_issues"`
 }
 
 type StoreIssue struct {
-	StoreID   uint   `json:"store_id"`
-	StoreName string `json:"store_name"`
+	StoreID   uint    `json:"store_id"`
+	StoreName string  `json:"store_name"`
+	Variance  float64 `json:"variance"`
+	Status    string  `json:"status"`
 }

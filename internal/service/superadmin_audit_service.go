@@ -69,29 +69,24 @@ func (s *superAdminAuditService) GetAllReportsInSession(sessionID uint) ([]respo
 	//get all reports
 	reports, err := s.storeAuditRepo.FindByAuditSessionID(session.ID)
 	if err != nil {
-		return nil, err
+		return make([]response.StoreAuditSummaryResponse, 0), nil
 	}
 	//group by storeID
-	storeMap := make(map[uint]*response.StoreAuditSummaryResponse)
+	storeMap := make(map[uint][]*domain.StoreAuditReport)
 	for _, report := range reports {
-		if _, exist := storeMap[report.StoreID]; !exist {
-			storeName := "unknown"
-			if report.Store != nil {
-				storeName = report.Store.StoreName
-			}
-			storeMap[report.StoreID] = &response.StoreAuditSummaryResponse{
-				StoreId:   report.StoreID,
-				StoreName: storeName,
-				Status:    "SUBMITTED",
-			}
-		}
-		if report.Status == "DRAFT" {
-			storeMap[report.StoreID].Status = "DRAFT"
-		}
+		storeMap[report.StoreID] = append(storeMap[report.StoreID], report)
 	}
 	var result []response.StoreAuditSummaryResponse
-	for _, store := range storeMap {
-		result = append(result, *store)
+	for storeID, items := range storeMap {
+		storeName := "Unknown"
+		if len(items) > 0 && items[0].Store != nil {
+			storeName = items[0].Store.StoreName
+		}
+		result = append(result, response.StoreAuditSummaryResponse{
+			StoreId:   storeID,
+			StoreName: storeName,
+			Status:    getStoreStatus(items),
+		})
 	}
 	return result, nil
 }
@@ -104,8 +99,13 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 	}
 	//get items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(sessionID, storeID)
-	if err != nil {
-		return nil, err
+	if err != nil || len(items) == 0 {
+		return &response.AuditReportItemDetailResponse{
+			SessionTitle: session.Title,
+			StoreName:    "",
+			TotalItems:   0,
+			Items:        []response.AuditItemsResponse{},
+		}, nil
 	}
 	// convert in to response
 	result := &response.AuditReportItemDetailResponse{
@@ -126,45 +126,63 @@ func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.Audi
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	//create mapping
 
-	storeMap := make(map[uint]bool)
-	storeName := make(map[uint]string)
+	//create mapping, group items by store
+	storeItemsMap := make(map[uint][]*domain.StoreAuditReport)
 	productSet := make(map[uint]bool)
+	totalVariance := 0.0
 
 	for _, report := range reports {
-		productSet[report.StoreID] = true
-		if _, exists := storeMap[report.StoreID]; !exists {
-			storeName[report.StoreID] = report.Store.StoreName
-			storeMap[report.StoreID] = false
-		}
-		if report.Status == "DRAFT" {
-			storeMap[report.StoreID] = true
-		}
+		storeItemsMap[report.StoreID] = append(storeItemsMap[report.StoreID], report)
+		productSet[report.ProductID] = true
+		totalVariance += report.Variance
 	}
+
+	//calculate summary
 	var storeSubmitted int
+	var storeDraft int
 	var issues []response.StoreIssue
 
-	for id, isDraft := range storeMap {
-		if isDraft {
-			issues = append(issues, response.StoreIssue{
-				StoreID:   id,
-				StoreName: storeName[id],
-			})
-		} else {
+	for storeID, items := range storeItemsMap {
+		status := getStoreStatus(items)
+
+		if status == "SUBMITTED" || status == "APPROVED" {
 			storeSubmitted++
+		} else {
+			storeDraft++
+		}
+		//calculate store variance
+		storeVariance := 0.0
+		for _, item := range items {
+			storeVariance += item.Variance
+		}
+		//add to issue if variance < -10
+		if storeVariance < -10 {
+			storeName := "Unknown"
+			if len(items) > 0 && items[0].Store != nil {
+				storeName = items[0].Store.StoreName
+			}
+			issues = append(issues, response.StoreIssue{
+				StoreID:   storeID,
+				StoreName: storeName,
+				Status:    status,
+				Variance:  storeVariance,
+			})
 		}
 	}
+
 	return &response.AuditSummaryResponse{
 		SessionTitle:     session.Title,
-		TotalStores:      len(storeMap),
+		TotalStores:      len(storeItemsMap),
 		StoresSubmitted:  storeSubmitted,
+		StoreDraft:       storeDraft,
 		TotalProducts:    len(productSet),
+		TotalVariance:    totalVariance,
 		StoresWithIssues: issues,
 	}, nil
 }
 
-func (s *superAdminAuditService) ApproveStoreReport(adminID uint, sessionID uint, storeID uint) error {
+func (s *superAdminAuditService) ApproveStoreReport(sessionID uint, storeID uint, adminID uint) error {
 	//get all items
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(sessionID, storeID)
 	if err != nil {
@@ -174,12 +192,10 @@ func (s *superAdminAuditService) ApproveStoreReport(adminID uint, sessionID uint
 		return errors.New("no record found")
 	}
 	status := getStoreStatus(items)
-	if status == "DRAFT" {
-		return errors.New("store is DRAFT")
+	if status != "SUBMITTED" {
+		return errors.New("can only approve submitted reports")
 	}
-	if status == "APPROVED" {
-		return errors.New("store is APPROVED")
-	}
+
 	updateData := map[string]interface{}{
 		"status":      "APPROVED",
 		"approved_at": time.Now(),
@@ -198,12 +214,10 @@ func (s *superAdminAuditService) DeclineStoreReport(sessionID uint, storeID uint
 		return errors.New("no record found")
 	}
 	status := getStoreStatus(items)
-	if status == "DRAFT" {
-		return errors.New("store is DRAFT")
+	if status != "SUBMITTED" {
+		return errors.New("can only decline store reports")
 	}
-	if status == "APPROVED" {
-		return errors.New("store is APPROVED")
-	}
+
 	updateData := map[string]interface{}{
 		"status":      "DECLINED",
 		"approved_at": time.Now(),

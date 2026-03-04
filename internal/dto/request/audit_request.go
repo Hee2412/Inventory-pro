@@ -38,3 +38,7 @@ type UpdateAuditItem struct {
 	ProductID   uint    `json:"product_id" binding:"required"`
 	ActualStock float64 `json:"actual_stock"`
 }
+
+type DeclineReportRequest struct {
+	Reason string `json:"reason"`
+}
