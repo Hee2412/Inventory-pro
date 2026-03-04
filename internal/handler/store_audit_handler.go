@@ -18,7 +18,7 @@ func NewStoreAuditHandler(storeAuditHandler service.StoreAuditService) *StoreAud
 // GetAuditReport GET /api/store/audit-sessions/:sessionId/report
 func (s *StoreAuditHandler) GetAuditReport(c *gin.Context) {
 	//get sessionID from URL
-	sessionID, err := getIDParam(c, "session_id")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -38,7 +38,7 @@ func (s *StoreAuditHandler) GetAuditReport(c *gin.Context) {
 // UpdateAuditItem PUT /api/store/audit-sessions/:sessionId/items
 func (s *StoreAuditHandler) UpdateAuditItem(c *gin.Context) {
 	//get sessionID from URL
-	sessionID, err := getIDParam(c, "session_id")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -70,7 +70,7 @@ func (s *StoreAuditHandler) UpdateAuditItem(c *gin.Context) {
 // SubmitAuditReport POST api/store/audit-sessions/:sessionId/submit
 func (s *StoreAuditHandler) SubmitAuditReport(c *gin.Context) {
 	//get sessionId from URL
-	sessionID, err := getIDParam(c, "session_id")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

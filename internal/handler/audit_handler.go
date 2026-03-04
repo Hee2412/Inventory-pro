@@ -24,7 +24,7 @@ func (a *AuditSessionHandler) CreateAuditSession(c *gin.Context) {
 		return
 	}
 	//get userID from JWT
-	userID, exists := c.Get("user_id")
+	userID, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -50,14 +50,14 @@ func (a *AuditSessionHandler) GetAllAuditSession(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": result})
 }
 
-// GetAuditSessionByID GET /api/superadmin/audit-sessions/:id
+// GetAuditSessionByID GET /api/superadmin/audit-sessions/:sessionId
 func (a *AuditSessionHandler) GetAuditSessionByID(c *gin.Context) {
-	sessionID, err := getIDParam(c, "sessionId")
+	id, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := a.service.GetAuditSessionByID(sessionID)
+	result, err := a.service.GetAuditSessionByID(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

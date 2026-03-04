@@ -80,18 +80,20 @@ func main() {
 		protected.GET("/products/:id", productHandler.GetProductById)
 	}
 
-	storeProtected := protected.Group("api/store")
+	storeProtected := protected.Group("/api/store")
 	storeProtected.Use(authMiddleware.Handler(), authMiddleware.RequireRoles("store"))
 	{
+		//order routes
 		storeProtected.GET("/sessions/:sessionId/order", storeOrderHandler.GetOrCreateOrder)
 		storeProtected.PUT("/orders/:orderId/items", storeOrderHandler.UpdateOrder)
 		storeProtected.POST("/orders/:orderId/submit", storeOrderHandler.SubmitOrder)
 		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
 		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
+		//audit routes
 		storeProtected.PUT("/audit-sessions/:sessionId/items", storeAuditHandler.UpdateAuditItem)
 		storeProtected.POST("/audit-sessions/:sessionId/submit", storeAuditHandler.SubmitAuditReport)
 		storeProtected.GET("/audit-reports", storeAuditHandler.GetMyAuditReport)
-		storeProtected.GET("/store/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
+		storeProtected.GET("/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
 	}
 
 	adminRoutes := router.Group("/api/admin")
@@ -130,7 +132,7 @@ func main() {
 		{
 			adminAudit.POST("", auditSessionHandler.CreateAuditSession)
 			adminAudit.GET("", auditSessionHandler.GetAllAuditSession)
-			adminAudit.GET("/id", auditSessionHandler.GetAuditSessionByID)
+			adminAudit.GET("/:sessionId", auditSessionHandler.GetAuditSessionByID)
 			adminAudit.POST("/products", auditSessionHandler.AddProductToAudit)
 			adminAudit.DELETE("/:sessionId/products/:productId", auditSessionHandler.RemoveProductFromAudit)
 			adminAudit.PATCH("/:id/close", auditSessionHandler.CloseAuditSession)

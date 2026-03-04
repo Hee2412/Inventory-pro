@@ -64,7 +64,7 @@ func (s *StoreOrderHandler) SubmitOrder(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, exists := c.Get("store_id")
+	_, exists := c.Get("storeId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
