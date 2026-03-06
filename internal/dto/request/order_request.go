@@ -15,8 +15,11 @@ type AddProductToSessionRequest struct {
 }
 
 type UpdateOrderItemRequest struct {
+	Items []UpdateOrderItem `json:"items" binding:"required,min=1"`
+}
+type UpdateOrderItem struct {
 	ProductID uint    `json:"product_id" binding:"required"`
-	Quantity  float64 `json:"quantity" binding:"required"`
+	Quantity  float64 `json:"quantity" binding:"min=0"`
 }
 
 type DeclineOrderRequest struct {

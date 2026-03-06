@@ -121,7 +121,7 @@ func (a *AuditSessionHandler) CloseAuditSession(c *gin.Context) {
 // UpdateAuditSession PUT /api/superadmin/audit-sessions/:id
 func (a *AuditSessionHandler) UpdateAuditSession(c *gin.Context) {
 	//get id from URL
-	id, err := getIDParam(c, "sessionId")
+	id, err := getIDParam(c, "id")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

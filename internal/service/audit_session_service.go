@@ -158,8 +158,8 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 		for _, store := range stores {
 			//check if report exists
 			existing, _ := a.storeAuditRepo.FindBySessionStoreAndProduct(
-				store.ID,
 				session.ID,
+				store.ID,
 				productID)
 			if existing != nil {
 				//it does -> add item to report
@@ -258,11 +258,19 @@ func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.Upd
 	if req.Status != nil {
 		session.Status = *req.Status
 	}
+	if req.StartDate != nil {
+		session.StartDate = *req.StartDate
+	}
 	if req.EndDate != nil {
 		session.EndDate = *req.EndDate
 	}
 	if req.AuditType != nil {
 		session.AuditType = *req.AuditType
+	}
+	if req.EndDate != nil && req.StartDate != nil {
+		if req.EndDate.Before(*req.StartDate) {
+			return errors.New("the end date can not be before the start date")
+		}
 	}
 	return a.auditSessionRepo.Update(session)
 }

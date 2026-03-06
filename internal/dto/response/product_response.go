@@ -5,8 +5,8 @@ type ProductResponse struct {
 	ProductName string  `json:"product_name"`
 	ProductCode string  `json:"product_code"`
 	Unit        string  `json:"unit"`
-	MOQ         float32 `json:"moq"`
-	OM          float32 `json:"om"`
+	MOQ         float64 `json:"moq"`
+	OM          float64 `json:"om"`
 	Type        string  `json:"type"`
 	OrderCycle  string  `json:"order_cycle"`
 	AuditCycle  string  `json:"audit_cycle"`

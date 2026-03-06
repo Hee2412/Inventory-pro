@@ -11,8 +11,8 @@ type Product struct {
 	ProductName string  `gorm:"size:255;not null" json:"product_name"`
 	ProductCode string  `gorm:"size:100;unique" json:"product_code"`
 	Unit        string  `gorm:"size:50" json:"unit"`
-	MOQ         float32 `json:"moq"`
-	OM          float32 `json:"om"`
+	MOQ         float64 `json:"moq"`
+	OM          float64 `json:"om"`
 	Type        string  `gorm:"size:50;not null" json:"type"`
 	OrderCycle  string  `gorm:"size:50;not null" json:"order_cycle"`
 	AuditCycle  string  `gorm:"size:50;not null" json:"audit_cycle"`

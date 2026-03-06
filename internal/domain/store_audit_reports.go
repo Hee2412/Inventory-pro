@@ -7,6 +7,8 @@ type StoreAuditReport struct {
 	SessionID   uint       `json:"session_id"`
 	StoreID     uint       `json:"store_id"`
 	ProductID   uint       `json:"product_id"`
+	ProductName string     `json:"product_name"`
+	StoreName   string     `json:"store_name"`
 	Product     Product    `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 	Store       *User      `gorm:"foreignKey:StoreID" json:"store,omitempty"`
 	SystemStock float64    `json:"system_stock"`

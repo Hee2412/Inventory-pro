@@ -6,6 +6,8 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
 	"errors"
+	"fmt"
+	"math"
 	"time"
 )
 
@@ -21,17 +23,20 @@ type storeOrderService struct {
 	storeOrderRepo     repository.StoreOrderRepository
 	orderSessionRepo   repository.OrderSessionRepository
 	storeOrderItemRepo repository.StoreOrderItemRepository
+	productRepo        repository.ProductRepository
 }
 
 func NewStoreOrderService(
 	storeOrderRepo repository.StoreOrderRepository,
 	orderSessionRepo repository.OrderSessionRepository,
 	storeOrderItemRepo repository.StoreOrderItemRepository,
+	productRepo repository.ProductRepository,
 ) StoreOrderService {
 	return &storeOrderService{
 		storeOrderRepo:     storeOrderRepo,
 		orderSessionRepo:   orderSessionRepo,
 		storeOrderItemRepo: storeOrderItemRepo,
+		productRepo:        productRepo,
 	}
 }
 
@@ -95,29 +100,45 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 	if err != nil {
 		return errors.New("order not found")
 	}
-	if order.Status != "DRAFT" {
-		return errors.New("can only edit draft orders")
+	if order.Status == "CLOSED" {
+		return errors.New("cannot update closed order")
 	}
-	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
+
+	var newItems []*domain.OrderItems
+	for _, item := range req.Items {
+		if item.Quantity == 0 {
+			continue
+		}
+		product, err := s.productRepo.FindById(item.ProductID)
+		if err != nil {
+			continue
+		}
+		//check moq
+		if item.Quantity < product.MOQ {
+			return fmt.Errorf("product quantity less than %f", product.MOQ)
+		}
+		//check om
+		if product.OM > 0 {
+			if math.Mod(item.Quantity, product.OM) != 0 {
+				return fmt.Errorf("%s order multiple must be %v (ex: %v, %v...)", product.ProductName, product.OM, product.OM, product.OM*2)
+			}
+		}
+		newItems = append(newItems, &domain.OrderItems{
+			OrderID:     order.ID,
+			ProductID:   product.ID,
+			Quantity:    item.Quantity,
+			ProductName: product.ProductName,
+			ProductCode: product.ProductCode,
+		})
+	}
+	if len(newItems) == 0 {
+		return errors.New("no valid items found")
+	}
+	err = s.storeOrderItemRepo.DeleteByOrderId(orderID)
 	if err != nil {
 		return err
 	}
-	var targetItem *domain.OrderItems
-	for i, item := range items {
-		if item.ProductID == req.ProductID {
-			targetItem = items[i]
-			break
-		}
-	}
-	if targetItem == nil {
-		newItem := &domain.OrderItems{
-			OrderID:   order.ID,
-			Quantity:  req.Quantity,
-			ProductID: req.ProductID}
-		return s.storeOrderItemRepo.Create(newItem)
-	}
-	targetItem.Quantity = req.Quantity
-	return s.storeOrderItemRepo.Update(targetItem)
+	return s.storeOrderItemRepo.Create(newItems...)
 }
 
 func (s *storeOrderService) SubmitOrder(orderId uint) error {

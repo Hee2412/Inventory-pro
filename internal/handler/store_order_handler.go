@@ -24,7 +24,7 @@ func (s *StoreOrderHandler) GetOrCreateOrder(c *gin.Context) {
 		return
 	}
 	//get storeId
-	userID, exists := c.Get("storeId")
+	userID, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -53,8 +53,12 @@ func (s *StoreOrderHandler) UpdateOrder(c *gin.Context) {
 		return
 	}
 	//call service
-	result := s.service.UpdateOrder(orderID, req)
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	err = s.service.UpdateOrder(orderID, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "update order success"})
 }
 
 // SubmitOrder POST   /api/store/orders/:orderId/submit
@@ -64,7 +68,7 @@ func (s *StoreOrderHandler) SubmitOrder(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	_, exists := c.Get("storeId")
+	_, exists := c.Get("userId")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -96,7 +100,7 @@ func (s *StoreOrderHandler) GetOrderDetail(c *gin.Context) {
 
 // GetMyOrder GET    /api/store/orders
 func (s *StoreOrderHandler) GetMyOrder(c *gin.Context) {
-	userId, exist := c.Get("storeId")
+	userId, exist := c.Get("userId")
 	if !exist {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return

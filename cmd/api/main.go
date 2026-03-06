@@ -44,7 +44,7 @@ func main() {
 
 	orderSessionService := service.NewOrderSessionService(orderSessionRepo, productRepo, orderSessionProductRepo)
 	orderSessionHandler := handler.NewOrderSessionHandler(orderSessionService)
-	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo)
+	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo, productRepo)
 	storeOrderHandler := handler.NewStoreOrderHandler(storeOrderService)
 	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo)
 	adminOrderHandler := handler.NewAdminOrderHandler(adminOrderService)
@@ -80,8 +80,8 @@ func main() {
 		protected.GET("/products/:id", productHandler.GetProductById)
 	}
 
-	storeProtected := protected.Group("/api/store")
-	storeProtected.Use(authMiddleware.Handler(), authMiddleware.RequireRoles("store"))
+	storeProtected := protected.Group("/store")
+	storeProtected.Use(authMiddleware.RequireRoles("store"))
 	{
 		//order routes
 		storeProtected.GET("/sessions/:sessionId/order", storeOrderHandler.GetOrCreateOrder)
@@ -96,8 +96,8 @@ func main() {
 		storeProtected.GET("/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
 	}
 
-	adminRoutes := router.Group("/api/admin")
-	adminRoutes.Use(authMiddleware.Handler(), authMiddleware.RequireRoles("admin", "super_admin"))
+	adminRoutes := protected.Group("/admin")
+	adminRoutes.Use(authMiddleware.RequireRoles("admin", "super_admin"))
 	{
 		adminUser := adminRoutes.Group("/users")
 		{
@@ -142,8 +142,7 @@ func main() {
 		adminRoutes.POST("/orders/:orderId/decline", adminOrderHandler.DeclineOrder)
 	}
 
-	superAdminRoutes := router.Group("/api/superadmin")
-	superAdminRoutes.Use(authMiddleware.Handler())
+	superAdminRoutes := protected.Group("/superadmin")
 	superAdminRoutes.Use(authMiddleware.RequireRoles("super_admin"))
 	{
 		superAdminRoutes.DELETE("/users/:id/hard", userHandler.HardDeleteUser)
