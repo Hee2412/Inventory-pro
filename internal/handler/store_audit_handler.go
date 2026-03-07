@@ -51,7 +51,7 @@ func (s *StoreAuditHandler) UpdateAuditItem(c *gin.Context) {
 	}
 	storeID := userID.(uint)
 	//bind request
-	var req request.UpdateAuditItem
+	var req request.UpdateAuditItemsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -65,32 +65,6 @@ func (s *StoreAuditHandler) UpdateAuditItem(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully updated audit item"})
-}
-
-// SubmitAuditReport POST api/store/audit-sessions/:sessionId/submit
-func (s *StoreAuditHandler) SubmitAuditReport(c *gin.Context) {
-	//get sessionId from URL
-	sessionID, err := getIDParam(c, "sessionId")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	//get storeId from JWT
-	userID, exists := c.Get("userId")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	storeID := userID.(uint)
-	//call service
-	err = s.service.SubmitAuditReport(sessionID, storeID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Fails to submit audit report",
-		})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully submitted audit report"})
 }
 
 // GetMyAuditReport GET api/store/audit-reports

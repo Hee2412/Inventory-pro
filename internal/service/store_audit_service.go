@@ -12,8 +12,7 @@ import (
 
 type StoreAuditService interface {
 	GetAuditReport(sessionID uint, storeID uint) (*response.AuditReportItemDetailResponse, error)
-	UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItem) error
-	SubmitAuditReport(sessionID uint, storeID uint) error
+	UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItemsRequest) error
 	GetMyAuditReports(storeID uint) ([]response.AuditReportItemDetailResponse, error)
 }
 
@@ -56,61 +55,52 @@ func (s *storeAuditService) GetAuditReport(sessionID uint, storeID uint) (*respo
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	if session.Status != "OPEN" {
-		return nil, errors.New("session is not already open")
+	store, err := s.userRepo.FindById(storeID)
+	if err != nil {
+		return nil, errors.New("store not found")
 	}
 	//find items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
-	if err != nil || len(items) == 0 {
-		return &response.AuditReportItemDetailResponse{
-			SessionTitle: session.Title,
-			StoreName:    "",
-			TotalItems:   0,
-			Items:        []response.AuditItemsResponse{},
-		}, nil
-	}
 	result := &response.AuditReportItemDetailResponse{
 		SessionTitle: session.Title,
-		StoreName:    items[0].Store.StoreName,
-		TotalItems:   len(items),
-		Items:        toAuditReportItemResponse(items),
+		StoreName:    store.StoreName,
+		TotalItems:   0,
+		Items:        []response.AuditItemsResponse{},
+	}
+	if err == nil && len(items) > 0 {
+		result.TotalItems = len(items)
+		result.Items = toAuditReportItemResponse(items)
 	}
 	return result, nil
 }
 
-func (s *storeAuditService) UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItem) error {
-	//find 1 item
-	item, err := s.storeAuditRepo.FindBySessionStoreAndProduct(sessionID, storeID, req.ProductID)
+func (s *storeAuditService) UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItemsRequest) error {
+	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return errors.New("item not found")
+		return errors.New("session not found")
 	}
-	if item.Status != "DRAFT" {
-		return errors.New("can only update draft item")
-	}
-	item.ActualStock = req.ActualStock
-	item.Variance = req.ActualStock - item.SystemStock
-	return s.storeAuditRepo.Update(item)
-}
-
-func (s *storeAuditService) SubmitAuditReport(sessionID uint, storeID uint) error {
-	//get all items
-	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
-	if err != nil || len(items) == 0 {
-		return errors.New("no item to submit")
-	}
-
-	//check null
-	for _, item := range items {
-		if item.Status != "DRAFT" {
-			return errors.New("can only submit draft item")
+	if session.Status == "OPEN" && time.Now().After(session.EndDate) {
+		session.Status = "CLOSED"
+		err := s.auditSessionRepo.Update(session)
+		if err != nil {
+			return err
 		}
+		return errors.New("session has expired and been closed")
 	}
-	now := time.Now()
-	for _, item := range items {
-		item.Status = "SUBMITTED"
-		item.SubmittedAt = &now
-
-		err := s.storeAuditRepo.Update(item)
+	if session.Status == "CLOSED" {
+		return errors.New("session is already closed")
+	}
+	for _, itemReq := range req.Items {
+		item, err := s.storeAuditRepo.FindBySessionStoreAndProduct(sessionID, storeID, itemReq.ProductID)
+		if err != nil {
+			continue
+		}
+		if item == nil {
+			continue
+		}
+		item.ActualStock = itemReq.ActualStock
+		item.Variance = itemReq.ActualStock - item.SystemStock
+		err = s.storeAuditRepo.Update(item)
 		if err != nil {
 			return err
 		}
@@ -119,10 +109,14 @@ func (s *storeAuditService) SubmitAuditReport(sessionID uint, storeID uint) erro
 }
 
 func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]response.AuditReportItemDetailResponse, error) {
-	//find by storeID
+	//find reports by storeID
 	items, err := s.storeAuditRepo.FindByStoreId(storeID)
 	if err != nil {
 		return make([]response.AuditReportItemDetailResponse, 0), err
+	}
+	store, err := s.userRepo.FindById(storeID)
+	if err != nil {
+		return nil, errors.New("store not found")
 	}
 	sessionMap := make(map[uint][]*domain.StoreAuditReport)
 	for _, item := range items {
@@ -130,10 +124,13 @@ func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]response.AuditRep
 	}
 	result := make([]response.AuditReportItemDetailResponse, 0)
 	for sessionID, sessionItems := range sessionMap {
-		session, _ := s.auditSessionRepo.FindById(sessionID)
+		session, err := s.auditSessionRepo.FindById(sessionID)
+		if err != nil {
+			continue
+		}
 		result = append(result, response.AuditReportItemDetailResponse{
 			SessionTitle: session.Title,
-			StoreName:    sessionItems[0].Store.StoreName,
+			StoreName:    store.StoreName,
 			TotalItems:   len(sessionItems),
 			Items:        toAuditReportItemResponse(sessionItems),
 		})

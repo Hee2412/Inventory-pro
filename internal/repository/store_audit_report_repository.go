@@ -103,8 +103,8 @@ func (s *storeAuditRepository) Delete(id uint) error {
 	return s.db.Delete(&domain.StoreAuditReport{}, id).Error
 }
 
-func (s *storeAuditRepository) UpdateStatusByStore(sessionID, storeID uint, data map[string]interface{}) error {
+func (s *storeAuditRepository) UpdateStatusByStore(storeID, sessionID uint, data map[string]interface{}) error {
 	return s.db.Model(&domain.StoreAuditReport{}).
-		Where("audit_session_id = ? AND store_id = ?", sessionID, storeID).
+		Where("store_id = ? AND session_id = ?", storeID, sessionID).
 		Updates(data).Error
 }

@@ -40,6 +40,9 @@ type UpdateAuditItem struct {
 	ActualStock float64 `json:"actual_stock"`
 }
 
+type UpdateAuditItemsRequest struct {
+	Items []UpdateAuditItem `json:"items"`
+}
 type DeclineReportRequest struct {
 	Reason string `json:"reason"`
 }

@@ -16,7 +16,8 @@ type StoreAuditReport struct {
 	Variance    float64    `json:"variance"`
 	Status      string     `gorm:"size:50" json:"status"`
 	UpdatedAt   time.Time  `json:"updated_at"`
-	SubmittedAt *time.Time `json:"submitted_at"`
+	ApprovedAt  *time.Time `json:"approved_at"`
+	ApprovedBy  uint       `json:"approved_by"`
 }
 
 func (StoreAuditReport) TableName() string {

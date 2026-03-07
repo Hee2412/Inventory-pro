@@ -74,12 +74,12 @@ func (s *SuperadminAuditHandler) GetAuditSummary(c *gin.Context) {
 // ApproveStoreReport POST /api/superadmin/audit-sessions/:sessionId/stores/:storeId/approve
 func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 	//get sessionID/storeID from URL
-	sessionID, err := getIDParam(c, "sessionId")
+	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	storeID, err := getIDParam(c, "storeId")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -92,7 +92,7 @@ func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 	}
 	adminID := userID.(uint)
 	//call service
-	err = s.service.ApproveStoreReport(sessionID, storeID, adminID)
+	err = s.service.ApproveStoreReport(storeID, sessionID, adminID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -103,12 +103,12 @@ func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 // DeclineStoreReport POST /api/superadmin/audit-sessions/:sessionId/stores/:storeId/decline
 func (s *SuperadminAuditHandler) DeclineStoreReport(c *gin.Context) {
 	//get sessionID/storeID from URL
-	sessionID, err := getIDParam(c, "sessionId")
+	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	storeID, err := getIDParam(c, "storeId")
+	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -127,7 +127,7 @@ func (s *SuperadminAuditHandler) DeclineStoreReport(c *gin.Context) {
 		return
 	}
 	//call service
-	err = s.service.DeclineStoreReport(sessionID, storeID, req.Reason, adminID)
+	err = s.service.DeclineStoreReport(storeID, sessionID, req.Reason, adminID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

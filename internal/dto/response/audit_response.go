@@ -40,7 +40,7 @@ type AuditReportItemDetailResponse struct {
 type AuditSummaryResponse struct {
 	SessionTitle     string       `json:"session_title"`
 	TotalStores      int          `json:"total_stores"`
-	StoresSubmitted  int          `json:"stores_submitted"`
+	StoresApproved   int          `json:"stores_approved"`
 	StoreDraft       int          `json:"store_draft"`
 	TotalProducts    int          `json:"total_products"`
 	TotalVariance    float64      `json:"total_variance"`

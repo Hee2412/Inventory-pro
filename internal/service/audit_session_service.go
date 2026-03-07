@@ -7,6 +7,7 @@ import (
 	"Inventory-pro/internal/repository"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type AuditSessionService interface {
 	RemoveProductFromAudit(sessionID uint, productID uint) error
 	CloseAuditSession(auditSessionID uint) error
 	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
+	AutoCloseExpiredSession() error
 }
 
 type auditSessionService struct {
@@ -49,6 +51,21 @@ func toAuditSessionResponse(session *domain.AuditSession) response.AuditSessionR
 		Status:    session.Status,
 		CreatedBy: session.CreatedBy,
 	}
+}
+
+func (a *auditSessionService) AutoCloseExpiredSession() error {
+	sessions, _ := a.auditSessionRepo.FindByStatus("OPEN")
+	for _, session := range sessions {
+		if time.Now().After(session.EndDate) {
+			session.Status = "CLOSED"
+			err := a.auditSessionRepo.Update(session)
+			if err != nil {
+				return err
+			}
+			log.Printf("AutoClose expired session %d:", session.ID)
+		}
+	}
+	return nil
 }
 
 func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionRequest, createdBy uint) (*response.AuditSessionResponse, error) {

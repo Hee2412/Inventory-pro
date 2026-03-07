@@ -12,8 +12,8 @@ type SuperAdminAuditService interface {
 	GetAllReportsInSession(sessionID uint) ([]response.StoreAuditSummaryResponse, error)
 	GetReportDetail(sessionID uint, storeID uint) (*response.AuditReportItemDetailResponse, error)
 	GetAuditSummary(sessionID uint) (*response.AuditSummaryResponse, error)
-	ApproveStoreReport(sessionID uint, storeID uint, adminID uint) error
-	DeclineStoreReport(sessionID uint, storeID uint, reason string, adminID uint) error
+	ApproveStoreReport(storeID uint, sessionID uint, adminID uint) error
+	DeclineStoreReport(storeID uint, sessionID uint, reason string, adminID uint) error
 }
 
 type superAdminAuditService struct {
@@ -97,22 +97,21 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	//get items in session
-	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(sessionID, storeID)
-	if err != nil || len(items) == 0 {
-		return &response.AuditReportItemDetailResponse{
-			SessionTitle: session.Title,
-			StoreName:    "",
-			TotalItems:   0,
-			Items:        []response.AuditItemsResponse{},
-		}, nil
+	store, err := s.userRepo.FindById(storeID)
+	if err != nil {
+		return nil, errors.New("store not found")
 	}
-	// convert in to response
+	//get items in session
+	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	result := &response.AuditReportItemDetailResponse{
 		SessionTitle: session.Title,
-		StoreName:    items[0].Store.StoreName,
-		TotalItems:   len(items),
-		Items:        toAuditReportItemResponse(items),
+		StoreName:    store.StoreName,
+		TotalItems:   0,
+		Items:        []response.AuditItemsResponse{},
+	}
+	if err == nil && len(items) > 0 {
+		result.TotalItems = len(items)
+		result.Items = toAuditReportItemResponse(items)
 	}
 	return result, nil
 }
@@ -139,15 +138,15 @@ func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.Audi
 	}
 
 	//calculate summary
-	var storeSubmitted int
+	var storeApproved int
 	var storeDraft int
 	var issues []response.StoreIssue
 
 	for storeID, items := range storeItemsMap {
 		status := getStoreStatus(items)
 
-		if status == "SUBMITTED" || status == "APPROVED" {
-			storeSubmitted++
+		if status == "APPROVED" {
+			storeApproved++
 		} else {
 			storeDraft++
 		}
@@ -174,7 +173,7 @@ func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.Audi
 	return &response.AuditSummaryResponse{
 		SessionTitle:     session.Title,
 		TotalStores:      len(storeItemsMap),
-		StoresSubmitted:  storeSubmitted,
+		StoresApproved:   storeApproved,
 		StoreDraft:       storeDraft,
 		TotalProducts:    len(productSet),
 		TotalVariance:    totalVariance,
@@ -182,9 +181,9 @@ func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.Audi
 	}, nil
 }
 
-func (s *superAdminAuditService) ApproveStoreReport(sessionID uint, storeID uint, adminID uint) error {
+func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint, adminID uint) error {
 	//get all items
-	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(sessionID, storeID)
+	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
 		return errors.New("cant get items")
 	}
@@ -192,7 +191,7 @@ func (s *superAdminAuditService) ApproveStoreReport(sessionID uint, storeID uint
 		return errors.New("no record found")
 	}
 	status := getStoreStatus(items)
-	if status != "SUBMITTED" {
+	if status != "DRAFT" {
 		return errors.New("can only approve submitted reports")
 	}
 
@@ -201,12 +200,12 @@ func (s *superAdminAuditService) ApproveStoreReport(sessionID uint, storeID uint
 		"approved_at": time.Now(),
 		"approved_by": adminID,
 	}
-	return s.storeAuditRepo.UpdateStatusByStore(sessionID, storeID, updateData)
+	return s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
 }
 
-func (s *superAdminAuditService) DeclineStoreReport(sessionID uint, storeID uint, reason string, adminID uint) error {
+func (s *superAdminAuditService) DeclineStoreReport(storeID uint, sessionID uint, reason string, adminID uint) error {
 	//get all items
-	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(sessionID, storeID)
+	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
 		return errors.New("cant get items")
 	}
@@ -214,7 +213,7 @@ func (s *superAdminAuditService) DeclineStoreReport(sessionID uint, storeID uint
 		return errors.New("no record found")
 	}
 	status := getStoreStatus(items)
-	if status != "SUBMITTED" {
+	if status != "DRAFT" {
 		return errors.New("can only decline store reports")
 	}
 
@@ -224,5 +223,5 @@ func (s *superAdminAuditService) DeclineStoreReport(sessionID uint, storeID uint
 		"approved_by": adminID,
 		"reason":      reason,
 	}
-	return s.storeAuditRepo.UpdateStatusByStore(sessionID, storeID, updateData)
+	return s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
 }

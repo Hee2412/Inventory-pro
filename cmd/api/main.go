@@ -86,12 +86,10 @@ func main() {
 		//order routes
 		storeProtected.GET("/sessions/:sessionId/order", storeOrderHandler.GetOrCreateOrder)
 		storeProtected.PUT("/orders/:orderId/items", storeOrderHandler.UpdateOrder)
-		storeProtected.POST("/orders/:orderId/submit", storeOrderHandler.SubmitOrder)
 		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
 		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
 		//audit routes
 		storeProtected.PUT("/audit-sessions/:sessionId/items", storeAuditHandler.UpdateAuditItem)
-		storeProtected.POST("/audit-sessions/:sessionId/submit", storeAuditHandler.SubmitAuditReport)
 		storeProtected.GET("/audit-reports", storeAuditHandler.GetMyAuditReport)
 		storeProtected.GET("/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
 	}
