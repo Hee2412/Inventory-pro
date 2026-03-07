@@ -148,7 +148,7 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 	//for each product -> create report/StoreAuditReport for each store
 	for _, productID := range req.ProductID {
 		//check product exists
-		_, err := a.productRepo.FindById(productID)
+		product, err := a.productRepo.FindById(productID)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("product %d not found", productID))
 			continue
@@ -172,6 +172,8 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 				SessionID:   session.ID,
 				StoreID:     store.ID,
 				ProductID:   productID,
+				StoreName:   store.StoreName,
+				ProductName: product.ProductName,
 				SystemStock: 0,
 				ActualStock: 0,
 				Variance:    0,
