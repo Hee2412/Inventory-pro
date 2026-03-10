@@ -13,7 +13,8 @@ import (
 type StoreAuditService interface {
 	GetAuditReport(sessionID uint, storeID uint) (*response.AuditReportItemDetailResponse, error)
 	UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItemsRequest) error
-	GetMyAuditReports(storeID uint) ([]response.AuditReportItemDetailResponse, error)
+	GetMyAuditReports(storeID uint) ([]*response.AuditReportItemDetailResponse, error)
+	GetAllPaginatedReports(page, limit int) ([]*response.AuditReportItemDetailResponse, int64, error)
 }
 
 type storeAuditService struct {
@@ -34,10 +35,10 @@ func NewStoreAuditService(
 	}
 }
 
-func toAuditReportItemResponse(items []*domain.StoreAuditReport) []response.AuditItemsResponse {
-	result := make([]response.AuditItemsResponse, 0)
+func toAuditReportItemResponse(items []*domain.StoreAuditReport) []*response.AuditItemsResponse {
+	result := make([]*response.AuditItemsResponse, 0)
 	for _, item := range items {
-		result = append(result, response.AuditItemsResponse{
+		result = append(result, &response.AuditItemsResponse{
 			ProductID:   item.ProductID,
 			ProductName: item.Product.ProductName,
 			SystemStock: item.SystemStock,
@@ -55,17 +56,12 @@ func (s *storeAuditService) GetAuditReport(sessionID uint, storeID uint) (*respo
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	store, err := s.userRepo.FindById(storeID)
-	if err != nil {
-		return nil, errors.New("store not found")
-	}
 	//find items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	result := &response.AuditReportItemDetailResponse{
 		SessionTitle: session.Title,
-		StoreName:    store.StoreName,
 		TotalItems:   0,
-		Items:        []response.AuditItemsResponse{},
+		Items:        []*response.AuditItemsResponse{},
 	}
 	if err == nil && len(items) > 0 {
 		result.TotalItems = len(items)
@@ -108,29 +104,24 @@ func (s *storeAuditService) UpdateAuditItem(sessionID uint, storeID uint, req re
 	return nil
 }
 
-func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]response.AuditReportItemDetailResponse, error) {
+func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]*response.AuditReportItemDetailResponse, error) {
 	//find reports by storeID
 	items, err := s.storeAuditRepo.FindByStoreId(storeID)
 	if err != nil {
-		return make([]response.AuditReportItemDetailResponse, 0), err
-	}
-	store, err := s.userRepo.FindById(storeID)
-	if err != nil {
-		return nil, errors.New("store not found")
+		return make([]*response.AuditReportItemDetailResponse, 0), err
 	}
 	sessionMap := make(map[uint][]*domain.StoreAuditReport)
 	for _, item := range items {
 		sessionMap[item.SessionID] = append(sessionMap[item.SessionID], item)
 	}
-	result := make([]response.AuditReportItemDetailResponse, 0)
+	result := make([]*response.AuditReportItemDetailResponse, 0)
 	for sessionID, sessionItems := range sessionMap {
 		session, err := s.auditSessionRepo.FindById(sessionID)
 		if err != nil {
 			continue
 		}
-		result = append(result, response.AuditReportItemDetailResponse{
+		result = append(result, &response.AuditReportItemDetailResponse{
 			SessionTitle: session.Title,
-			StoreName:    store.StoreName,
 			TotalItems:   len(sessionItems),
 			Items:        toAuditReportItemResponse(sessionItems),
 		})
@@ -139,4 +130,21 @@ func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]response.AuditRep
 		return result[i].SessionTitle > result[j].SessionTitle
 	})
 	return result, nil
+}
+
+func (s *storeAuditService) GetAllPaginatedReports(page, limit int) ([]*response.AuditReportItemDetailResponse, int64, error) {
+	reports, total, err := s.storeAuditRepo.FindAllPaginated(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	var result []*response.AuditReportItemDetailResponse
+	for _, report := range reports {
+		itemResponse := toAuditReportItemResponse(reports)
+		result = append(result, &response.AuditReportItemDetailResponse{
+			SessionTitle: report.OrderSession.Title,
+			TotalItems:   len(reports),
+			Items:        itemResponse,
+		})
+	}
+	return result, total, nil
 }

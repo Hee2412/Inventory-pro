@@ -13,13 +13,14 @@ import (
 
 type AuditSessionService interface {
 	CreateAuditSession(req request.CreateAuditSessionRequest, createdBy uint) (*response.AuditSessionResponse, error)
-	GetAllAuditSessions() ([]response.AuditSessionResponse, error)
+	GetAllAuditSessions() ([]*response.AuditSessionResponse, error)
 	GetAuditSessionByID(sessionID uint) (*response.AuditSessionDetailsResponse, error)
 	AddProductToAudit(req request.AddProductToAuditRequest) (*response.AddProductResponse, error)
 	RemoveProductFromAudit(sessionID uint, productID uint) error
 	CloseAuditSession(auditSessionID uint) error
 	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
 	AutoCloseExpiredSession() error
+	GetAllSessionsPaginated(page, limit int) ([]*response.AuditSessionResponse, int64, error)
 }
 
 type auditSessionService struct {
@@ -41,8 +42,8 @@ func NewAuditSessionService(
 		productRepo:      productRepo,
 	}
 }
-func toAuditSessionResponse(session *domain.AuditSession) response.AuditSessionResponse {
-	return response.AuditSessionResponse{
+func toAuditSessionResponse(session *domain.AuditSession) *response.AuditSessionResponse {
+	return &response.AuditSessionResponse{
 		SessionID: session.ID,
 		Title:     session.Title,
 		AuditType: session.AuditType,
@@ -88,15 +89,15 @@ func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionR
 		return nil, err
 	}
 	result := toAuditSessionResponse(newAuditSession)
-	return &result, nil
+	return result, nil
 }
 
-func (a *auditSessionService) GetAllAuditSessions() ([]response.AuditSessionResponse, error) {
+func (a *auditSessionService) GetAllAuditSessions() ([]*response.AuditSessionResponse, error) {
 	sessions, err := a.auditSessionRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
-	result := make([]response.AuditSessionResponse, 0)
+	result := make([]*response.AuditSessionResponse, 0)
 	for _, session := range sessions {
 		result = append(result, toAuditSessionResponse(session))
 	}
@@ -292,4 +293,16 @@ func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.Upd
 		}
 	}
 	return a.auditSessionRepo.Update(session)
+}
+
+func (a *auditSessionService) GetAllSessionsPaginated(page, limit int) ([]*response.AuditSessionResponse, int64, error) {
+	sessions, total, err := a.auditSessionRepo.FindAllPaginated(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	var result []*response.AuditSessionResponse
+	for _, sess := range sessions {
+		result = append(result, toAuditSessionResponse(sess))
+	}
+	return result, total, nil
 }

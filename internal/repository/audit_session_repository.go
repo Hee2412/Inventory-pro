@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ type AuditSessionRepository interface {
 
 	AdminFindById(id uint) (*domain.AuditSession, error)
 	AdminFindAll() ([]*domain.AuditSession, error)
+	FindAllPaginated(page, limit int) ([]*domain.AuditSession, int64, error)
 }
 
 type auditSessionRepository struct {
@@ -85,4 +87,18 @@ func (a *auditSessionRepository) AdminFindAll() ([]*domain.AuditSession, error) 
 		return nil, err
 	}
 	return auditSessions, nil
+}
+
+func (u *auditSessionRepository) FindAllPaginated(page, limit int) ([]*domain.AuditSession, int64, error) {
+	var sessions []*domain.AuditSession
+	var total int64
+	// count total
+	if err := u.db.Model(&domain.AuditSession{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	//get paginated data
+	err := u.db.Scopes(pagination.Paginate(page, limit)).
+		Find(&sessions).Error
+
+	return sessions, total, err
 }

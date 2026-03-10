@@ -5,7 +5,6 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type StoreAuditHandler struct {
@@ -33,7 +32,7 @@ func (s *StoreAuditHandler) GetAuditReport(c *gin.Context) {
 	storeID := userID.(uint)
 	//call service
 	report, err := s.service.GetAuditReport(sessionID, storeID)
-	c.JSON(http.StatusOK, gin.H{"data": report})
+	response.Success(c, report)
 }
 
 // UpdateAuditItem PUT /api/store/audit-sessions/:sessionId/items

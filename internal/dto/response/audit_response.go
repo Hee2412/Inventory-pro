@@ -13,7 +13,7 @@ type AuditSessionResponse struct {
 }
 
 type AuditSessionDetailsResponse struct {
-	SessionInfo AuditSessionResponse        `json:"session_info"`
+	SessionInfo *AuditSessionResponse       `json:"session_info"`
 	Report      []StoreAuditSummaryResponse `json:"report"`
 }
 
@@ -31,10 +31,9 @@ type AuditItemsResponse struct {
 }
 
 type AuditReportItemDetailResponse struct {
-	SessionTitle string               `json:"session_title"`
-	StoreName    string               `json:"store_name"`
-	TotalItems   int                  `json:"total_items"`
-	Items        []AuditItemsResponse `json:"items"`
+	SessionTitle string                `json:"session_title"`
+	TotalItems   int                   `json:"total_items"`
+	Items        []*AuditItemsResponse `json:"items"`
 }
 
 type AuditSummaryResponse struct {

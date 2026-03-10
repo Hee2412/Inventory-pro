@@ -10,7 +10,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers() ([]response.UserResponse, error)
+	GetAllUsers() ([]*response.UserResponse, error)
 	GetUserById(userId uint) (*response.UserResponse, error)
 	UpdateUser(userId uint, req request.UpdateUserRequest) error
 	DeactivateUser(userId uint) error
@@ -18,6 +18,7 @@ type UserService interface {
 
 	DeleteUser(userId uint) error
 	HardDeleteUser(userId uint) error
+	GetAllUsersPaginated(page, limit int) ([]*response.UserResponse, int64, error)
 }
 
 type userService struct {
@@ -27,8 +28,8 @@ type userService struct {
 func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{userRepo: repo}
 }
-func toUserResponse(user *domain.User) response.UserResponse {
-	return response.UserResponse{
+func toUserResponse(user *domain.User) *response.UserResponse {
+	return &response.UserResponse{
 		ID:        user.ID,
 		Username:  user.Username,
 		Role:      user.Role,
@@ -40,12 +41,12 @@ func toUserResponse(user *domain.User) response.UserResponse {
 		DeletedAt: user.DeletedAt,
 	}
 }
-func (s *userService) GetAllUsers() ([]response.UserResponse, error) {
+func (s *userService) GetAllUsers() ([]*response.UserResponse, error) {
 	user, err := s.userRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
-	var result []response.UserResponse
+	var result []*response.UserResponse
 	for _, user := range user {
 		result = append(result, toUserResponse(user))
 	}
@@ -57,7 +58,7 @@ func (s *userService) GetUserById(userId uint) (*response.UserResponse, error) {
 		return nil, err
 	}
 	result := toUserResponse(user)
-	return &result, nil
+	return result, nil
 }
 func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) error {
 	user, err := s.userRepo.FindById(userId)
@@ -134,4 +135,16 @@ func (s *userService) HardDeleteUser(userId uint) error {
 		return errors.New("this user is not deleted yet")
 	}
 	return s.userRepo.HardDelete(userId)
+}
+
+func (s *userService) GetAllUsersPaginated(page, limit int) ([]*response.UserResponse, int64, error) {
+	users, total, err := s.userRepo.FindAllPaginated(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	var result []*response.UserResponse
+	for _, user := range users {
+		result = append(result, toUserResponse(user))
+	}
+	return result, total, nil
 }

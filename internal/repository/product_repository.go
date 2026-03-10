@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -15,6 +16,7 @@ type ProductRepository interface {
 	Delete(id uint) error
 	HardDelete(id uint) error
 	FindActiveProducts() ([]*domain.Product, error)
+	FindAllPaginated(page, limit int) ([]*domain.Product, int64, error)
 }
 
 type productRepository struct {
@@ -80,4 +82,14 @@ func (p *productRepository) FindActiveProducts() ([]*domain.Product, error) {
 		return nil, err
 	}
 	return products, nil
+}
+
+func (p *productRepository) FindAllPaginated(page, limit int) ([]*domain.Product, int64, error) {
+	var products []*domain.Product
+	var total int64
+	if err := p.db.Model(&domain.Product{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := p.db.Scopes(pagination.Paginate(page, limit)).Find(&products).Error
+	return products, total, err
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"Inventory-pro/config"
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/handler"
 	"Inventory-pro/internal/middleware"
 	"Inventory-pro/internal/repository"
@@ -59,10 +60,7 @@ func main() {
 	router := gin.Default()
 	router.Use(middleware.LoggingMiddleware())
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":   "OK",
-			"database": "Connected",
-		})
+		response.Message(c, "Service is healthy")
 	})
 
 	authMiddleware := middleware.NewAuthMiddleware(cfg)

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"Inventory-pro/internal/dto/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,7 +14,7 @@ func (m *AuthMiddleware) RequireRoles(roles ...string) gin.HandlerFunc {
 				return
 			}
 		}
-		c.JSON(403, gin.H{"error": "Permission denied"})
+		response.Unauthorized(c, "Permission denied")
 		c.Abort()
 	}
 }

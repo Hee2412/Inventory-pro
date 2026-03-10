@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ type StoreAuditReportRepository interface {
 	FindBySessionStoreAndProduct(sessionID uint, storeID uint, productID uint) (*domain.StoreAuditReport, error)
 	Delete(id uint) error
 	UpdateStatusByStore(sessionID, storeID uint, data map[string]interface{}) error
+	FindAllPaginated(page, limit int) ([]*domain.StoreAuditReport, int64, error)
 }
 
 type storeAuditRepository struct {
@@ -107,4 +109,17 @@ func (s *storeAuditRepository) UpdateStatusByStore(storeID, sessionID uint, data
 	return s.db.Model(&domain.StoreAuditReport{}).
 		Where("store_id = ? AND session_id = ?", storeID, sessionID).
 		Updates(data).Error
+}
+
+func (s *storeAuditRepository) FindAllPaginated(page, limit int) ([]*domain.StoreAuditReport, int64, error) {
+	var reports []*domain.StoreAuditReport
+	var total int64
+	// count total
+	if err := s.db.Model(&domain.StoreAuditReport{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	//get paginated data
+	err := s.db.Scopes(pagination.Paginate(page, limit)).
+		Find(&reports).Error
+	return reports, total, err
 }

@@ -11,11 +11,12 @@ import (
 
 type OrderSessionService interface {
 	CreateSession(req request.CreateOrderSessionRequest, createBy uint) (*response.OrderSessionResponse, error)
-	GetAllSessions() ([]response.OrderSessionResponse, error)
+	GetAllSessions() ([]*response.OrderSessionResponse, error)
 	GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error)
 	AddProductToSession(req request.AddProductToSessionRequest) (*response.AddProductResponse, error)
 	RemoveProductFromSession(sessionId uint, productId uint) error
 	CloseSession(sessionId uint) error
+	GetAllPaginatedSessions(page, limit int) ([]*response.OrderSessionResponse, int64, error)
 }
 
 type orderSessionService struct {
@@ -35,8 +36,8 @@ func NewOrderSessionService(
 		orderSessionProductRepo: sessionProductRepo}
 }
 
-func toOrderSessionResponse(order *domain.OrderSession) response.OrderSessionResponse {
-	return response.OrderSessionResponse{
+func toOrderSessionResponse(order *domain.OrderSession) *response.OrderSessionResponse {
+	return &response.OrderSessionResponse{
 		ID:         order.ID,
 		Title:      order.Title,
 		OrderCycle: order.OrderCycle,
@@ -46,6 +47,7 @@ func toOrderSessionResponse(order *domain.OrderSession) response.OrderSessionRes
 		CreatedAt:  order.CreatedAt,
 	}
 }
+
 func (o *orderSessionService) CreateSession(req request.CreateOrderSessionRequest, createdBy uint) (*response.OrderSessionResponse, error) {
 	if req.Deadline.After(req.DeliveryDate) {
 		return nil, errors.New("delivery date is in the past")
@@ -63,15 +65,15 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 		return nil, err
 	}
 	result := toOrderSessionResponse(newOrderSession)
-	return &result, nil
+	return result, nil
 }
 
-func (o *orderSessionService) GetAllSessions() ([]response.OrderSessionResponse, error) {
+func (o *orderSessionService) GetAllSessions() ([]*response.OrderSessionResponse, error) {
 	sessions, err := o.orderSessionRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
-	var result []response.OrderSessionResponse
+	var result []*response.OrderSessionResponse
 	for _, session := range sessions {
 		result = append(result, toOrderSessionResponse(session))
 	}
@@ -90,11 +92,11 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 		//create blank slice if nothing
 		return &response.OrderSessionDetailResponse{
 			Session:  toOrderSessionResponse(session),
-			Products: []response.ProductResponse{},
+			Products: []*response.ProductResponse{},
 		}, nil
 	}
 	//mapping product to response
-	var products []response.ProductResponse
+	var products []*response.ProductResponse
 	for _, sp := range sessionProduct {
 		product, err := o.productRepo.FindById(sp.ProductID)
 		if err != nil {
@@ -178,4 +180,16 @@ func (o *orderSessionService) CloseSession(sessionId uint) error {
 	}
 	session.Status = "CLOSED"
 	return o.orderSessionRepo.Update(session)
+}
+
+func (o *orderSessionService) GetAllPaginatedSessions(page, limit int) ([]*response.OrderSessionResponse, int64, error) {
+	sessions, total, err := o.orderSessionRepo.FindAllPaginated(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	var result []*response.OrderSessionResponse
+	for _, session := range sessions {
+		result = append(result, toOrderSessionResponse(session))
+	}
+	return result, total, nil
 }

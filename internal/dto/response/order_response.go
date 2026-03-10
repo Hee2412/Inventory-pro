@@ -36,8 +36,8 @@ type StoreOrderDetailResponse struct {
 }
 
 type OrderSessionDetailResponse struct {
-	Session  OrderSessionResponse `json:"order"`
-	Products []ProductResponse    `json:"items"`
+	Session  *OrderSessionResponse `json:"order"`
+	Products []*ProductResponse    `json:"items"`
 }
 
 type AdminOrderInSessionResponse struct {

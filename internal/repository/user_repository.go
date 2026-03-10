@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -17,6 +18,7 @@ type UserRepository interface {
 	FindByRole(role string) ([]*domain.User, error)
 	FindActiveUsers() ([]*domain.User, error)
 	CountByRole(role string) (int64, error)
+	FindAllPaginated(page, limit int) ([]*domain.User, int64, error)
 }
 
 type userRepository struct {
@@ -95,4 +97,18 @@ func (u *userRepository) CountByRole(role string) (int64, error) {
 		return 0, err
 	}
 	return count, nil
+}
+
+func (u *userRepository) FindAllPaginated(page, limit int) ([]*domain.User, int64, error) {
+	var users []*domain.User
+	var total int64
+	// count total
+	if err := u.db.Model(&domain.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	//get paginated data
+	err := u.db.Scopes(pagination.Paginate(page, limit)).
+		Find(&users).Error
+
+	return users, total, err
 }

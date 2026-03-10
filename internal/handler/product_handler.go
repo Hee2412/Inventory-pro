@@ -4,6 +4,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
+	"Inventory-pro/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,12 +28,14 @@ func (p *ProductHandler) GetAllProducts(c *gin.Context) {
 
 // GetAllProductsForAdmin GET /api/admin/products
 func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
-	products, err := p.productHandler.GetAllProducts()
+	param := pagination.ParseParams(c)
+	products, total, err := p.productHandler.GetAllProductsPaginated(param.Page, param.Limit)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, products)
+	paginationResponse := pagination.NewResponse(products, param.Page, param.Limit, total)
+	response.Success(c, paginationResponse)
 }
 
 // GetProductById GET /api/products/:id

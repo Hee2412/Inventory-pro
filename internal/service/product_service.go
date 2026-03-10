@@ -9,8 +9,8 @@ import (
 )
 
 type ProductService interface {
-	GetAllProducts() ([]response.ProductResponse, error)
-	FindActiveProducts() ([]response.ProductResponse, error)
+	GetAllProducts() ([]*response.ProductResponse, error)
+	FindActiveProducts() ([]*response.ProductResponse, error)
 	GetProductById(productId uint) (*response.ProductResponse, error)
 	CreateProduct(req request.CreateProductRequest) (*response.ProductResponse, error)
 	UpdateProduct(productId uint, req request.UpdateProductRequest) error
@@ -18,6 +18,7 @@ type ProductService interface {
 	ActivateProduct(productId uint) error
 	DeleteProduct(productId uint) error
 	HardDeleteProduct(productId uint) error
+	GetAllProductsPaginated(page, limit int) ([]*response.ProductResponse, int64, error)
 }
 
 type productService struct {
@@ -28,8 +29,8 @@ func NewProductService(repo repository.ProductRepository) ProductService {
 	return &productService{productRepo: repo}
 }
 
-func toProductResponse(product *domain.Product) response.ProductResponse {
-	return response.ProductResponse{
+func toProductResponse(product *domain.Product) *response.ProductResponse {
+	return &response.ProductResponse{
 		ID:          product.ID,
 		ProductName: product.ProductName,
 		ProductCode: product.ProductCode,
@@ -43,23 +44,23 @@ func toProductResponse(product *domain.Product) response.ProductResponse {
 	}
 }
 
-func (p *productService) FindActiveProducts() ([]response.ProductResponse, error) {
+func (p *productService) FindActiveProducts() ([]*response.ProductResponse, error) {
 	products, err := p.productRepo.FindActiveProducts()
 	if err != nil {
 		return nil, err
 	}
-	var result []response.ProductResponse
+	var result []*response.ProductResponse
 	for _, product := range products {
 		result = append(result, toProductResponse(product))
 	}
 	return result, nil
 }
-func (p *productService) GetAllProducts() ([]response.ProductResponse, error) {
+func (p *productService) GetAllProducts() ([]*response.ProductResponse, error) {
 	product, err := p.productRepo.FindAll()
 	if err != nil {
 		return nil, err
 	}
-	var products []response.ProductResponse
+	var products []*response.ProductResponse
 	for _, product := range product {
 		products = append(products, toProductResponse(product))
 	}
@@ -72,7 +73,7 @@ func (p *productService) GetProductById(productId uint) (*response.ProductRespon
 		return nil, err
 	}
 	result := toProductResponse(product)
-	return &result, nil
+	return result, nil
 }
 
 func (p *productService) CreateProduct(req request.CreateProductRequest) (*response.ProductResponse, error) {
@@ -91,7 +92,7 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 		return nil, err
 	}
 	result := toProductResponse(newProduct)
-	return &result, nil
+	return result, nil
 }
 
 func (p *productService) UpdateProduct(productId uint, req request.UpdateProductRequest) error {
@@ -164,4 +165,16 @@ func (p *productService) HardDeleteProduct(productId uint) error {
 		return errors.New("product not found")
 	}
 	return p.productRepo.HardDelete(productId)
+}
+
+func (p *productService) GetAllProductsPaginated(page, limit int) ([]*response.ProductResponse, int64, error) {
+	products, total, err := p.productRepo.FindAllPaginated(page, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	var result []*response.ProductResponse
+	for _, product := range products {
+		result = append(result, toProductResponse(product))
+	}
+	return result, total, nil
 }

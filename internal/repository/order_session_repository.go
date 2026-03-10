@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
 
@@ -12,6 +13,7 @@ type OrderSessionRepository interface {
 	FindByStatus(status string) ([]*domain.OrderSession, error)
 	Update(orderSession *domain.OrderSession) error
 	Delete(id uint) error
+	FindAllPaginated(page, limit int) ([]*domain.OrderSession, int64, error)
 }
 
 type orderSessionRepository struct {
@@ -59,4 +61,18 @@ func (o *orderSessionRepository) Update(orderSession *domain.OrderSession) error
 
 func (o *orderSessionRepository) Delete(id uint) error {
 	return o.db.Delete(&domain.OrderSession{}, id).Error
+}
+
+func (o *orderSessionRepository) FindAllPaginated(page, limit int) ([]*domain.OrderSession, int64, error) {
+	var orderSessions []*domain.OrderSession
+	var total int64
+	// count total
+	if err := o.db.Model(&domain.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	//get paginated data
+	err := o.db.Scopes(pagination.Paginate(page, limit)).
+		Find(&orderSessions).Error
+
+	return orderSessions, total, err
 }

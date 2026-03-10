@@ -4,6 +4,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
+	"Inventory-pro/pkg/pagination"
 	"github.com/gin-gonic/gin"
 	"strconv"
 )
@@ -26,12 +27,14 @@ func getIDParam(c *gin.Context, paramName string) (uint, error) {
 
 // GetAllUsers GET /api/admin/users
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
-	users, err := uh.userHandler.GetAllUsers()
+	param := pagination.ParseParams(c)
+	users, total, err := uh.userHandler.GetAllUsersPaginated(param.Page, param.Limit)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, users)
+	paginatedResponse := pagination.NewResponse(users, param.Page, param.Limit, total)
+	response.Success(c, paginatedResponse)
 }
 
 // GetUserById GET /api/admin/users/:id
