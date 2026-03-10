@@ -5,7 +5,6 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type AuthHandler struct {
@@ -20,31 +19,32 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 	var req request.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
 	token, user, err := handler.authService.Login(req.Username, req.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		response.Unauthorized(c, "Invalid token")
 		return
 	}
-	c.JSON(http.StatusOK, response.LoginResponse{
+	result := response.LoginResponse{
 		Token:     token,
 		ID:        user.ID,
 		Username:  user.Username,
 		Role:      user.Role,
 		StoreName: user.StoreName,
 		StoreCode: user.StoreCode,
-	})
-
+	}
+	response.Success(c, result)
 }
 
+// Register POST /api/admin/register
 func (handler *AuthHandler) Register(c *gin.Context) {
 	var req request.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid data"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
@@ -52,37 +52,24 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 	roleStr, _ := creatorRol.(string)
 	err := handler.authService.Register(roleStr, req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "register successfully",
-	})
+	response.Created(c, "Register successfully")
 }
 
+// GetProfile GET /api/me
 func (handler *AuthHandler) GetProfile(c *gin.Context) {
-	userID, exists := c.Get("userId")
+	id, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+		response.Unauthorized(c, "Invalid token")
 		return
 	}
-	floatID, ok := userID.(float64)
-	if !ok {
-		uID, okeUint := userID.(uint)
-		if !okeUint {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error format"})
-			return
-		}
-		floatID = float64(uID)
-	}
-	user, err := handler.authService.GetProfile(uint(floatID))
+	userId := id.(uint)
+	user, err := handler.authService.GetProfile(userId)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Unfounded User"})
+		response.NotFound(c, "User not found")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"user":    user,
-	})
+	response.Success(c, user)
 }

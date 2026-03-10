@@ -2,6 +2,7 @@ package handler
 
 import (
 	"Inventory-pro/internal/dto/request"
+	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -20,23 +21,23 @@ func (s *StoreOrderHandler) GetOrCreateOrder(c *gin.Context) {
 	//get sessionID
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	//get storeId
 	userID, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		response.Unauthorized(c, "Invalid token")
 		return
 	}
 	storeID := userID.(uint)
 	//call service
 	result, err := s.service.GetOrCreateOrder(sessionID, storeID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	response.Success(c, result)
 }
 
 // UpdateOrder PUT    /api/store/orders/:orderId/items
@@ -55,61 +56,61 @@ func (s *StoreOrderHandler) UpdateOrder(c *gin.Context) {
 	//call service
 	err = s.service.UpdateOrder(orderID, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "update order success"})
+	response.Message(c, "Order updated")
 }
 
 // SubmitOrder POST   /api/store/orders/:orderId/submit
 func (s *StoreOrderHandler) SubmitOrder(c *gin.Context) {
 	orderID, err := getIDParam(c, "orderId")
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	_, exists := c.Get("userId")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		response.Unauthorized(c, "Invalid token")
 		return
 	}
 	//call service
 	err = s.service.SubmitOrder(orderID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": "Submit order successfully"})
+	response.Message(c, "Order submitted")
 }
 
 // GetOrderDetail GET    /api/store/orders/:orderId
 func (s *StoreOrderHandler) GetOrderDetail(c *gin.Context) {
 	orderID, err := getIDParam(c, "orderId")
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	//call service
 	result, err := s.service.GetOrderDetail(orderID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	response.Success(c, result)
 }
 
 // GetMyOrder GET    /api/store/orders
 func (s *StoreOrderHandler) GetMyOrder(c *gin.Context) {
 	userId, exist := c.Get("userId")
 	if !exist {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		response.Unauthorized(c, "Invalid token")
 		return
 	}
 	storeID := userId.(uint)
 	result, err := s.service.GetMyOrder(storeID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": result})
+	response.Success(c, result)
 }

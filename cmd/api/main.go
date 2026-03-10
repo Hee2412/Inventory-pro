@@ -57,7 +57,7 @@ func main() {
 	superadminAuditHandler := handler.NewSuperadminAuditHandler(superadminAuditService)
 
 	router := gin.Default()
-
+	router.Use(middleware.LoggingMiddleware())
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":   "OK",

@@ -2,9 +2,9 @@ package handler
 
 import (
 	"Inventory-pro/internal/dto/request"
+	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"strconv"
 )
 
@@ -28,97 +28,97 @@ func getIDParam(c *gin.Context, paramName string) (uint, error) {
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 	users, err := uh.userHandler.GetAllUsers()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Fails to get users"})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	response.Success(c, users)
 }
 
 // GetUserById GET /api/admin/users/:id
 func (uh *UserHandler) GetUserById(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	user, err := uh.userHandler.GetUserById(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.InternalError(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	response.Success(c, user)
 }
 
 // UpdateUser PUT /api/admin/users/:id
 func (uh *UserHandler) UpdateUser(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	var req request.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	if err := uh.userHandler.UpdateUser(id, req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully updated user"})
+	response.Message(c, "User updated")
 }
 
 // DeactivateUser PATCH /api/admin/users/:id/deactivate
 func (uh *UserHandler) DeactivateUser(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	if err := uh.userHandler.DeactivateUser(id); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully deactivated user"})
+	response.Message(c, "User deactivated")
 }
 
 // ActivateUser PATCH /api/admin/users/:id/activate
 func (uh *UserHandler) ActivateUser(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	if err := uh.userHandler.ActivateUser(id); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully activated user"})
+	response.Message(c, "User activated")
 }
 
 // DeleteUser DELETE /api/admin/users/:id
 func (uh *UserHandler) DeleteUser(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	if err := uh.userHandler.DeleteUser(id); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted user"})
+	response.Message(c, "User deleted")
 }
 
 // HardDeleteUser DELETE /api/superadmin/users/:id/hard
 func (uh *UserHandler) HardDeleteUser(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		response.BadRequest(c, err.Error())
 		return
 	}
 	if err := uh.userHandler.HardDeleteUser(id); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Successfully deleted user"})
+	response.Message(c, "User deleted")
 }
