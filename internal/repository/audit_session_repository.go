@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/pkg/pagination"
+	"Inventory-pro/internal/dto/request"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +17,7 @@ type AuditSessionRepository interface {
 
 	AdminFindById(id uint) (*domain.AuditSession, error)
 	AdminFindAll() ([]*domain.AuditSession, error)
-	FindAllPaginated(page, limit int) ([]*domain.AuditSession, int64, error)
+	FindAllPaginated(params request.AuditSessionSearchParams) ([]*domain.AuditSession, int64, error)
 }
 
 type auditSessionRepository struct {
@@ -89,16 +89,24 @@ func (a *auditSessionRepository) AdminFindAll() ([]*domain.AuditSession, error) 
 	return auditSessions, nil
 }
 
-func (u *auditSessionRepository) FindAllPaginated(page, limit int) ([]*domain.AuditSession, int64, error) {
+func (a *auditSessionRepository) FindAllPaginated(params request.AuditSessionSearchParams) ([]*domain.AuditSession, int64, error) {
 	var sessions []*domain.AuditSession
 	var total int64
-	// count total
-	if err := u.db.Model(&domain.AuditSession{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	//get paginated data
-	err := u.db.Scopes(pagination.Paginate(page, limit)).
-		Find(&sessions).Error
+	query := a.db.Model(&domain.AuditSession{})
 
+	if params.Status != "" {
+		query = query.Where("status = ?", params.Status)
+	}
+	if params.ToDate != nil {
+		query = query.Where("created_at >= ?", params.ToDate)
+	}
+	if params.FromDate != nil {
+		query = query.Where("created_at <= ?", params.FromDate)
+	}
+	query.Count(&total)
+	offset := (params.Page - 1) * params.Limit
+	err := query.Offset(offset).Limit(params.Limit).
+		Order("created_at DESC").
+		Find(&sessions).Error
 	return sessions, total, err
 }

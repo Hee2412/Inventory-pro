@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/pkg/pagination"
+	"Inventory-pro/internal/dto/request"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +16,7 @@ type ProductRepository interface {
 	Delete(id uint) error
 	HardDelete(id uint) error
 	FindActiveProducts() ([]*domain.Product, error)
-	FindAllPaginated(page, limit int) ([]*domain.Product, int64, error)
+	FindAllPaginated(params request.ProductSearchParams) ([]*domain.Product, int64, error)
 }
 
 type productRepository struct {
@@ -84,12 +84,29 @@ func (p *productRepository) FindActiveProducts() ([]*domain.Product, error) {
 	return products, nil
 }
 
-func (p *productRepository) FindAllPaginated(page, limit int) ([]*domain.Product, int64, error) {
+func (p *productRepository) FindAllPaginated(params request.ProductSearchParams) ([]*domain.Product, int64, error) {
 	var products []*domain.Product
 	var total int64
-	if err := p.db.Model(&domain.Product{}).Count(&total).Error; err != nil {
-		return nil, 0, err
+	query := p.db.Model(&domain.Product{})
+	if params.Search != "" {
+		searchTerm := "%" + params.Search + "%"
+		query = query.Where(
+			"product_name LIKE ? OR product_code LIKE ?",
+			searchTerm, searchTerm)
 	}
-	err := p.db.Scopes(pagination.Paginate(page, limit)).Find(&products).Error
+	if params.IsActive != nil {
+		query = query.Where("is_active = ?", *params.IsActive)
+	}
+	if params.MinPrice != nil {
+		query = query.Where("min_price >= ?", *params.MinPrice)
+	}
+	if params.MaxPrice != nil {
+		query = query.Where("max_price <= ?", *params.MaxPrice)
+	}
+	query.Count(&total)
+	offset := (params.Page - 1) * params.Limit
+	err := query.Offset(offset).Limit(params.Limit).
+		Order("created_at DESC").
+		Find(&products).Error
 	return products, total, err
 }

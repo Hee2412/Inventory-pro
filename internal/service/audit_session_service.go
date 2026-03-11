@@ -20,7 +20,7 @@ type AuditSessionService interface {
 	CloseAuditSession(auditSessionID uint) error
 	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
 	AutoCloseExpiredSession() error
-	GetAllSessionsPaginated(page, limit int) ([]*response.AuditSessionResponse, int64, error)
+	GetAllSessionsPaginated(params request.AuditSessionSearchParams) ([]*response.AuditSessionResponse, int64, error)
 }
 
 type auditSessionService struct {
@@ -295,12 +295,12 @@ func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.Upd
 	return a.auditSessionRepo.Update(session)
 }
 
-func (a *auditSessionService) GetAllSessionsPaginated(page, limit int) ([]*response.AuditSessionResponse, int64, error) {
-	sessions, total, err := a.auditSessionRepo.FindAllPaginated(page, limit)
+func (a *auditSessionService) GetAllSessionsPaginated(params request.AuditSessionSearchParams) ([]*response.AuditSessionResponse, int64, error) {
+	sessions, total, err := a.auditSessionRepo.FindAllPaginated(params)
 	if err != nil {
 		return nil, 0, err
 	}
-	var result []*response.AuditSessionResponse
+	result := make([]*response.AuditSessionResponse, 0, len(sessions))
 	for _, sess := range sessions {
 		result = append(result, toAuditSessionResponse(sess))
 	}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
 	"errors"
@@ -9,9 +10,10 @@ import (
 )
 
 type AdminOrderService interface {
-	GetAllOrderInSession(sessionID uint) ([]response.AdminOrderInSessionResponse, error)
+	GetAllOrderInSession(sessionID uint) ([]*response.AdminOrderInSessionResponse, error)
 	ApproveOrder(orderId uint) error
 	DeclineOrder(orderId uint, reason string) error
+	GetAllPaginatedSessions(params request.OrderSearchParams) ([]*response.OrderResponse, int64, error)
 }
 
 type adminOrderService struct {
@@ -27,8 +29,8 @@ func NewAdminOrderService(
 		storeOrderRepo:   storeOrderRepo}
 }
 
-func toOrderInSessionResponse(order *domain.StoreOrder) response.AdminOrderInSessionResponse {
-	return response.AdminOrderInSessionResponse{
+func toOrderInSessionResponse(order *domain.StoreOrder) *response.AdminOrderInSessionResponse {
+	return &response.AdminOrderInSessionResponse{
 		ID:          order.ID,
 		StoreID:     order.StoreID,
 		StoreName:   order.StoreName,
@@ -38,7 +40,17 @@ func toOrderInSessionResponse(order *domain.StoreOrder) response.AdminOrderInSes
 	}
 }
 
-func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.AdminOrderInSessionResponse, error) {
+func toOrderResponse(order *domain.StoreOrder) *response.OrderResponse {
+	return &response.OrderResponse{
+		ID:        order.ID,
+		StoreID:   order.StoreID,
+		StoreName: order.StoreName,
+		Status:    order.Status,
+		SessionID: order.SessionID,
+	}
+}
+
+func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.AdminOrderInSessionResponse, error) {
 	//var sessionID
 	_, err := a.orderSessionRepo.FindById(sessionID)
 	if err != nil {
@@ -47,9 +59,9 @@ func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]response.Adm
 	//mapping to orderSessionResponse
 	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
 	if err != nil {
-		return make([]response.AdminOrderInSessionResponse, 0), nil
+		return make([]*response.AdminOrderInSessionResponse, 0), nil
 	}
-	result := make([]response.AdminOrderInSessionResponse, 0)
+	result := make([]*response.AdminOrderInSessionResponse, 0)
 	for _, order := range orders {
 		result = append(result, toOrderInSessionResponse(order))
 	}
@@ -90,4 +102,16 @@ func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	order.Note = reason
 	//Save/Update
 	return a.storeOrderRepo.Update(order)
+}
+
+func (a *adminOrderService) GetAllPaginatedSessions(params request.OrderSearchParams) ([]*response.OrderResponse, int64, error) {
+	sessions, total, err := a.storeOrderRepo.SearchAndFilter(params)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := make([]*response.OrderResponse, 0, len(sessions))
+	for _, session := range sessions {
+		result = append(result, toOrderResponse(session))
+	}
+	return result, total, nil
 }

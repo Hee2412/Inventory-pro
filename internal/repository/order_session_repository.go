@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/pkg/pagination"
+	"Inventory-pro/internal/dto/request"
 	"gorm.io/gorm"
 )
 
@@ -13,7 +13,7 @@ type OrderSessionRepository interface {
 	FindByStatus(status string) ([]*domain.OrderSession, error)
 	Update(orderSession *domain.OrderSession) error
 	Delete(id uint) error
-	FindAllPaginated(page, limit int) ([]*domain.OrderSession, int64, error)
+	FindAllPaginated(params request.SessionSearchParams) ([]*domain.OrderSession, int64, error)
 }
 
 type orderSessionRepository struct {
@@ -63,16 +63,24 @@ func (o *orderSessionRepository) Delete(id uint) error {
 	return o.db.Delete(&domain.OrderSession{}, id).Error
 }
 
-func (o *orderSessionRepository) FindAllPaginated(page, limit int) ([]*domain.OrderSession, int64, error) {
+func (o *orderSessionRepository) FindAllPaginated(params request.SessionSearchParams) ([]*domain.OrderSession, int64, error) {
 	var orderSessions []*domain.OrderSession
 	var total int64
-	// count total
-	if err := o.db.Model(&domain.User{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	//get paginated data
-	err := o.db.Scopes(pagination.Paginate(page, limit)).
-		Find(&orderSessions).Error
+	query := o.db.Model(&domain.OrderSession{})
 
+	if params.Status != "" {
+		query = query.Where("status = ?", params.Status)
+	}
+	if params.FromDate != nil {
+		query = query.Where("created_at >= ?", params.FromDate)
+	}
+	if params.ToDate != nil {
+		query = query.Where("created_at <= ?", params.ToDate)
+	}
+	query.Count(&total)
+	offset := (params.Page - 1) * params.Limit
+	err := query.Offset(offset).Limit(params.Limit).
+		Order("created_at DESC").
+		Find(&orderSessions).Error
 	return orderSessions, total, err
 }

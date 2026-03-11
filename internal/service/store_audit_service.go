@@ -14,7 +14,6 @@ type StoreAuditService interface {
 	GetAuditReport(sessionID uint, storeID uint) (*response.AuditReportItemDetailResponse, error)
 	UpdateAuditItem(sessionID uint, storeID uint, req request.UpdateAuditItemsRequest) error
 	GetMyAuditReports(storeID uint) ([]*response.AuditReportItemDetailResponse, error)
-	GetAllPaginatedReports(page, limit int) ([]*response.AuditReportItemDetailResponse, int64, error)
 }
 
 type storeAuditService struct {
@@ -36,7 +35,7 @@ func NewStoreAuditService(
 }
 
 func toAuditReportItemResponse(items []*domain.StoreAuditReport) []*response.AuditItemsResponse {
-	result := make([]*response.AuditItemsResponse, 0)
+	result := make([]*response.AuditItemsResponse, 0, len(items))
 	for _, item := range items {
 		result = append(result, &response.AuditItemsResponse{
 			ProductID:   item.ProductID,
@@ -130,21 +129,4 @@ func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]*response.AuditRe
 		return result[i].SessionTitle > result[j].SessionTitle
 	})
 	return result, nil
-}
-
-func (s *storeAuditService) GetAllPaginatedReports(page, limit int) ([]*response.AuditReportItemDetailResponse, int64, error) {
-	reports, total, err := s.storeAuditRepo.FindAllPaginated(page, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-	var result []*response.AuditReportItemDetailResponse
-	for _, report := range reports {
-		itemResponse := toAuditReportItemResponse(reports)
-		result = append(result, &response.AuditReportItemDetailResponse{
-			SessionTitle: report.OrderSession.Title,
-			TotalItems:   len(reports),
-			Items:        itemResponse,
-		})
-	}
-	return result, total, nil
 }

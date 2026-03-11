@@ -31,7 +31,7 @@ type OrderItemResponse struct {
 }
 
 type StoreOrderDetailResponse struct {
-	Order StoreOrderResponse  `json:"order"`
+	Order *StoreOrderResponse `json:"order"`
 	Items []OrderItemResponse `json:"items"`
 }
 
@@ -53,4 +53,12 @@ type AddProductResponse struct {
 	Added   int      `json:"added"`
 	Skipped int      `json:"skipped"`
 	Errs    []string `json:"errs,omitempty"`
+}
+
+type OrderResponse struct {
+	ID        uint   `json:"id"`
+	StoreID   uint   `json:"store_id"`
+	StoreName string `json:"store_name"`
+	Status    string `json:"status"`
+	SessionID uint   `json:"session_id"`
 }

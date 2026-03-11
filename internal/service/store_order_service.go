@@ -16,7 +16,8 @@ type StoreOrderService interface {
 	UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error
 	SubmitOrder(orderId uint) error
 	GetOrderDetail(orderID uint) (*response.StoreOrderDetailResponse, error)
-	GetMyOrder(storeID uint) ([]response.StoreOrderResponse, error)
+	GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error)
+	GetAllPaginatedOrders(params request.OrderSearchParams) ([]*response.StoreOrderResponse, int64, error)
 }
 
 type storeOrderService struct {
@@ -55,8 +56,8 @@ func toOrderItemResponse(items []*domain.OrderItems) []response.OrderItemRespons
 	return result
 }
 
-func toStoreOrderResponse(order *domain.StoreOrder) response.StoreOrderResponse {
-	return response.StoreOrderResponse{
+func toStoreOrderResponse(order *domain.StoreOrder) *response.StoreOrderResponse {
+	return &response.StoreOrderResponse{
 		ID:          order.ID,
 		SessionID:   order.SessionID,
 		StoreID:     order.StoreID,
@@ -182,17 +183,29 @@ func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDe
 	return result, nil
 }
 
-func (s *storeOrderService) GetMyOrder(storeID uint) ([]response.StoreOrderResponse, error) {
+func (s *storeOrderService) GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error) {
 	//findOrder By storeID
 	orders, err := s.storeOrderRepo.FindByStoreID(storeID)
 	if err != nil {
-		return make([]response.StoreOrderResponse, 0), nil
+		return make([]*response.StoreOrderResponse, 0), nil
 	}
 	//transfer to storeOrderResponse
-	result := make([]response.StoreOrderResponse, 0)
+	result := make([]*response.StoreOrderResponse, 0)
 	for _, order := range orders {
 		result = append(result, toStoreOrderResponse(order))
 	}
 	//return result
 	return result, nil
+}
+
+func (s *storeOrderService) GetAllPaginatedOrders(params request.OrderSearchParams) ([]*response.StoreOrderResponse, int64, error) {
+	orders, total, err := s.storeOrderRepo.SearchAndFilter(params)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := make([]*response.StoreOrderResponse, 0)
+	for _, order := range orders {
+		result = append(result, toStoreOrderResponse(order))
+	}
+	return result, total, nil
 }

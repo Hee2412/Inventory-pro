@@ -20,3 +20,21 @@ type CreateProductRequest struct {
 	OrderCycle  string  `json:"order_cycle" binding:"required"`
 	AuditCycle  string  `json:"audit_cycle" binding:"required"`
 }
+
+type ProductSearchParams struct {
+	Search   string   `form:"search"`
+	IsActive *bool    `form:"is_active"`
+	MinPrice *float64 `form:"min_price"`
+	MaxPrice *float64 `form:"max_price"`
+	Page     int      `form:"page" binding:"omitempty,min=1"`
+	Limit    int      `form:"limit" binding:"omitempty,min=1,max=100"`
+}
+
+func (p *ProductSearchParams) SetDefaults() {
+	if p.Page == 0 {
+		p.Page = 1
+	}
+	if p.Limit == 0 {
+		p.Limit = 20
+	}
+}

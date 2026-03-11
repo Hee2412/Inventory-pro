@@ -4,6 +4,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
+	"Inventory-pro/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,13 +42,19 @@ func (a *AuditSessionHandler) CreateAuditSession(c *gin.Context) {
 
 // GetAllAuditSession GET /api/superadmin/audit-sessions
 func (a *AuditSessionHandler) GetAllAuditSession(c *gin.Context) {
-	// cal service
-	result, err := a.service.GetAllAuditSessions()
+	param := pagination.ParseParams(c)
+	var params request.AuditSessionSearchParams
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	sessions, total, err := a.service.GetAllSessionsPaginated(params)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, result)
+	paginatedResponse := pagination.NewResponse(sessions, params.Page, params.Limit, total)
+	response.Success(c, paginatedResponse)
 }
 
 // GetAuditSessionByID GET /api/superadmin/audit-sessions/:sessionId

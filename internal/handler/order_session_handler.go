@@ -4,6 +4,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
+	"Inventory-pro/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,12 +43,22 @@ func (h *OrderSessionHandler) CreateSession(c *gin.Context) {
 
 // GetAllSessions GET /api/admin/sessions
 func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
-	sessions, err := h.service.GetAllSessions()
+	param := pagination.ParseParams(c)
+	//check request
+	var params request.SessionSearchParams
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	//call service
+	sessions, total, err := h.service.GetAllSessions(params)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	response.Success(c, sessions)
+	//create response
+	paginatedResponse := pagination.NewResponse(sessions, params.Page, params.Limit, total)
+	response.Success(c, paginatedResponse)
 }
 
 // GetSessionById GET /api/admin/sessions/:sessionId

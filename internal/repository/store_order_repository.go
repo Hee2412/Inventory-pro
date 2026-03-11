@@ -2,7 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
-	"Inventory-pro/pkg/pagination"
+	"Inventory-pro/internal/dto/request"
 	"gorm.io/gorm"
 )
 
@@ -15,7 +15,7 @@ type StoreOrderRepository interface {
 	FindByStoreID(storeId uint) ([]*domain.StoreOrder, error)
 	FindBySessionID(sessionID uint) ([]*domain.StoreOrder, error)
 	FindByStatus(status string) ([]*domain.StoreOrder, error)
-	FindAllPaginated(page, limit int) ([]*domain.StoreOrder, int64, error)
+	SearchAndFilter(params request.OrderSearchParams) ([]*domain.StoreOrder, int64, error)
 }
 type storeOrderRepository struct {
 	db *gorm.DB
@@ -78,16 +78,37 @@ func (s *storeOrderRepository) FindByStatus(status string) ([]*domain.StoreOrder
 	return orders, nil
 }
 
-func (s *storeOrderRepository) FindAllPaginated(page, limit int) ([]*domain.StoreOrder, int64, error) {
-	var users []*domain.StoreOrder
+func (s *storeOrderRepository) SearchAndFilter(params request.OrderSearchParams) ([]*domain.StoreOrder, int64, error) {
+	var orders []*domain.StoreOrder
 	var total int64
-	// count total
-	if err := s.db.Model(&domain.StoreOrder{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	//get paginated data
-	err := s.db.Scopes(pagination.Paginate(page, limit)).
-		Find(&users).Error
 
-	return users, total, err
+	query := s.db.Model(&domain.StoreOrder{})
+	if params.StoreID != nil {
+		query = query.Where("store_id = ?", *params.StoreID)
+	}
+
+	if params.SessionID != nil {
+		query = query.Where("session_id = ?", *params.SessionID)
+	}
+
+	if params.Status != "" {
+		query = query.Where("status = ?", params.Status)
+	}
+
+	if params.FromDate != nil {
+		query = query.Where("created_at >= ?", params.FromDate)
+	}
+
+	if params.ToDate != nil {
+		query = query.Where("created_at <= ?", params.ToDate)
+	}
+
+	query.Count(&total)
+
+	offset := (params.Page - 1) * params.Limit
+	err := query.Offset(offset).Limit(params.Limit).
+		Order("created_at DESC").
+		Find(&orders).Error
+
+	return orders, total, err
 }

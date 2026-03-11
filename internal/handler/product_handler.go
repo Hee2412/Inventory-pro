@@ -29,7 +29,13 @@ func (p *ProductHandler) GetAllProducts(c *gin.Context) {
 // GetAllProductsForAdmin GET /api/admin/products
 func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 	param := pagination.ParseParams(c)
-	products, total, err := p.productHandler.GetAllProductsPaginated(param.Page, param.Limit)
+	//check request
+	var params request.ProductSearchParams
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	products, total, err := p.productHandler.GetAllProductsPaginated(params)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

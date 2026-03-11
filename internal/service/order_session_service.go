@@ -11,12 +11,11 @@ import (
 
 type OrderSessionService interface {
 	CreateSession(req request.CreateOrderSessionRequest, createBy uint) (*response.OrderSessionResponse, error)
-	GetAllSessions() ([]*response.OrderSessionResponse, error)
+	GetAllSessions(params request.SessionSearchParams) ([]*response.OrderSessionResponse, int64, error)
 	GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error)
 	AddProductToSession(req request.AddProductToSessionRequest) (*response.AddProductResponse, error)
 	RemoveProductFromSession(sessionId uint, productId uint) error
 	CloseSession(sessionId uint) error
-	GetAllPaginatedSessions(page, limit int) ([]*response.OrderSessionResponse, int64, error)
 }
 
 type orderSessionService struct {
@@ -68,16 +67,16 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 	return result, nil
 }
 
-func (o *orderSessionService) GetAllSessions() ([]*response.OrderSessionResponse, error) {
-	sessions, err := o.orderSessionRepo.FindAll()
+func (o *orderSessionService) GetAllSessions(params request.SessionSearchParams) ([]*response.OrderSessionResponse, int64, error) {
+	sessions, total, err := o.orderSessionRepo.FindAllPaginated(params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	var result []*response.OrderSessionResponse
+	result := make([]*response.OrderSessionResponse, 0, len(sessions))
 	for _, session := range sessions {
 		result = append(result, toOrderSessionResponse(session))
 	}
-	return result, nil
+	return result, total, nil
 }
 
 func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error) {
@@ -180,16 +179,4 @@ func (o *orderSessionService) CloseSession(sessionId uint) error {
 	}
 	session.Status = "CLOSED"
 	return o.orderSessionRepo.Update(session)
-}
-
-func (o *orderSessionService) GetAllPaginatedSessions(page, limit int) ([]*response.OrderSessionResponse, int64, error) {
-	sessions, total, err := o.orderSessionRepo.FindAllPaginated(page, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-	var result []*response.OrderSessionResponse
-	for _, session := range sessions {
-		result = append(result, toOrderSessionResponse(session))
-	}
-	return result, total, nil
 }

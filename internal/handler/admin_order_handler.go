@@ -4,6 +4,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/service"
+	"Inventory-pro/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
 
@@ -67,4 +68,21 @@ func (a *AdminOrderHandler) DeclineOrder(c *gin.Context) {
 		return
 	}
 	response.Message(c, "Order declined successfully")
+}
+
+func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
+	param := pagination.ParseParams(c)
+	//check request
+	var params request.OrderSearchParams
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	orders, total, err := a.service.GetAllPaginatedSessions(params)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	paginatedResponse := pagination.NewResponse(orders, params.Page, params.Limit, total)
+	response.Success(c, paginatedResponse)
 }

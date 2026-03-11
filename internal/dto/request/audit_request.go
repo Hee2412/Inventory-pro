@@ -46,3 +46,20 @@ type UpdateAuditItemsRequest struct {
 type DeclineReportRequest struct {
 	Reason string `json:"reason"`
 }
+
+type AuditSessionSearchParams struct {
+	Status   string     `form:"status"`
+	FromDate *time.Time `form:"from_date" time_format:"2006-01-02"`
+	ToDate   *time.Time `form:"to_date" time_format:"2006-01-02"`
+	Page     int        `form:"page" binding:"omitempty,min=1"`
+	Limit    int        `form:"limit" binding:"omitempty,min=1,max=100"`
+}
+
+func (p *AuditSessionSearchParams) SetDefaults() {
+	if p.Page == 0 {
+		p.Page = 1
+	}
+	if p.Limit == 0 {
+		p.Limit = 20
+	}
+}

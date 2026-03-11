@@ -134,6 +134,7 @@ func main() {
 			adminAudit.PATCH("/:id/close", auditSessionHandler.CloseAuditSession)
 			adminAudit.PUT("/:id", auditSessionHandler.UpdateAuditSession)
 		}
+		adminRoutes.GET("/orders", adminOrderHandler.GetAllOrders)
 		adminRoutes.POST("/orders/:orderId/approve", adminOrderHandler.ApproveOrder)
 		adminRoutes.POST("/orders/:orderId/decline", adminOrderHandler.DeclineOrder)
 	}

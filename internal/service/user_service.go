@@ -19,6 +19,7 @@ type UserService interface {
 	DeleteUser(userId uint) error
 	HardDeleteUser(userId uint) error
 	GetAllUsersPaginated(page, limit int) ([]*response.UserResponse, int64, error)
+	SearchAndFilter(params request.UserSearchParams) ([]*response.UserResponse, int64, error)
 }
 
 type userService struct {
@@ -143,6 +144,18 @@ func (s *userService) GetAllUsersPaginated(page, limit int) ([]*response.UserRes
 		return nil, 0, err
 	}
 	var result []*response.UserResponse
+	for _, user := range users {
+		result = append(result, toUserResponse(user))
+	}
+	return result, total, nil
+}
+
+func (s *userService) SearchAndFilter(params request.UserSearchParams) ([]*response.UserResponse, int64, error) {
+	users, total, err := s.userRepo.SearchAndFilter(params)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := make([]*response.UserResponse, 0, len(users))
 	for _, user := range users {
 		result = append(result, toUserResponse(user))
 	}

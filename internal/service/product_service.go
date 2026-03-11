@@ -18,7 +18,7 @@ type ProductService interface {
 	ActivateProduct(productId uint) error
 	DeleteProduct(productId uint) error
 	HardDeleteProduct(productId uint) error
-	GetAllProductsPaginated(page, limit int) ([]*response.ProductResponse, int64, error)
+	GetAllProductsPaginated(params request.ProductSearchParams) ([]*response.ProductResponse, int64, error)
 }
 
 type productService struct {
@@ -167,12 +167,12 @@ func (p *productService) HardDeleteProduct(productId uint) error {
 	return p.productRepo.HardDelete(productId)
 }
 
-func (p *productService) GetAllProductsPaginated(page, limit int) ([]*response.ProductResponse, int64, error) {
-	products, total, err := p.productRepo.FindAllPaginated(page, limit)
+func (p *productService) GetAllProductsPaginated(params request.ProductSearchParams) ([]*response.ProductResponse, int64, error) {
+	products, total, err := p.productRepo.FindAllPaginated(params)
 	if err != nil {
 		return nil, 0, err
 	}
-	var result []*response.ProductResponse
+	result := make([]*response.ProductResponse, 0, len(products))
 	for _, product := range products {
 		result = append(result, toProductResponse(product))
 	}

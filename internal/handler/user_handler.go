@@ -28,7 +28,13 @@ func getIDParam(c *gin.Context, paramName string) (uint, error) {
 // GetAllUsers GET /api/admin/users
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 	param := pagination.ParseParams(c)
-	users, total, err := uh.userHandler.GetAllUsersPaginated(param.Page, param.Limit)
+	//check request
+	var params request.UserSearchParams
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	users, total, err := uh.userHandler.SearchAndFilter(params)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"Inventory-pro/internal/domain"
+	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/pkg/pagination"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ type UserRepository interface {
 	FindActiveUsers() ([]*domain.User, error)
 	CountByRole(role string) (int64, error)
 	FindAllPaginated(page, limit int) ([]*domain.User, int64, error)
+	SearchAndFilter(params request.UserSearchParams) ([]*domain.User, int64, error)
 }
 
 type userRepository struct {
@@ -110,5 +112,36 @@ func (u *userRepository) FindAllPaginated(page, limit int) ([]*domain.User, int6
 	err := u.db.Scopes(pagination.Paginate(page, limit)).
 		Find(&users).Error
 
+	return users, total, err
+}
+
+func (u *userRepository) SearchAndFilter(params request.UserSearchParams) ([]*domain.User, int64, error) {
+	var users []*domain.User
+	var total int64
+
+	query := u.db.Model(&domain.User{})
+	//search by email || store name
+	if params.Search != "" {
+		searchTerm := "%" + params.Search + "%"
+		query = query.Where(
+			"email LIKE ? OR store_name LIKE ?",
+			searchTerm, searchTerm,
+		)
+	}
+	//filter by role
+	if params.Role != "" {
+		query = query.Where("role = ?", params.Role)
+	}
+	//filter by is_active
+	if params.IsActive != nil {
+		query = query.Where("is_active = ?", params.IsActive)
+	}
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	offset := (params.Page - 1) * params.Limit
+	err := query.Offset(offset).Limit(params.Limit).
+		Order("created_at DESC").
+		Find(&users).Error
 	return users, total, err
 }
