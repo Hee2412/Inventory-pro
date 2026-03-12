@@ -3,7 +3,7 @@ package request
 import "time"
 
 type CreateOrderSessionRequest struct {
-	Title        string    `json:"title" binding:"required"`
+	Title        string    `json:"title"`
 	OrderCycle   string    `json:"order_cycle" binding:"required"`
 	Deadline     time.Time `json:"deadline" binding:"required"`
 	DeliveryDate time.Time `json:"delivery_date" binding:"required"`

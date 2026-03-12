@@ -7,6 +7,7 @@ import (
 	"Inventory-pro/internal/repository"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type OrderSessionService interface {
@@ -51,8 +52,14 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 	if req.Deadline.After(req.DeliveryDate) {
 		return nil, errors.New("delivery date is in the past")
 	}
+	title := req.Title
+	if title == "" {
+		cycleUpper := strings.ToUpper(req.OrderCycle)
+		datePart := req.Deadline.Format("0201")
+		title = fmt.Sprintf("%s %s", cycleUpper, datePart)
+	}
 	newOrderSession := &domain.OrderSession{
-		Title:        req.Title,
+		Title:        title,
 		OrderCycle:   req.OrderCycle,
 		Status:       "OPEN",
 		Deadline:     req.Deadline,

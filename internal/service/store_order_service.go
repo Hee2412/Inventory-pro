@@ -14,7 +14,6 @@ import (
 type StoreOrderService interface {
 	GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error)
 	UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error
-	SubmitOrder(orderId uint) error
 	GetOrderDetail(orderID uint) (*response.StoreOrderDetailResponse, error)
 	GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error)
 	GetAllPaginatedOrders(params request.OrderSearchParams) ([]*response.StoreOrderResponse, int64, error)
@@ -69,13 +68,25 @@ func toStoreOrderResponse(order *domain.StoreOrder) *response.StoreOrderResponse
 }
 
 func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
+	//call session
 	session, err := s.orderSessionRepo.FindById(sessionID)
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	if session.Status != "OPEN" {
-		return nil, errors.New("session is not open")
+	//check deadline
+	if session.Status == "OPEN" && time.Now().After(session.Deadline) {
+		session.Status = "CLOSED"
+		err := s.orderSessionRepo.Update(session)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New("session is expired and been closed")
 	}
+	//check session status
+	if session.Status == "CLOSED" {
+		return nil, errors.New("session is closed")
+	}
+	//check condition get or create order
 	order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
 	if err != nil {
 		order = &domain.StoreOrder{
@@ -97,14 +108,28 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 }
 
 func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error {
+	//find order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		return errors.New("order not found")
 	}
-	if order.Status == "CLOSED" {
-		return errors.New("cannot update closed order")
+	//check session
+	session, err := s.orderSessionRepo.FindById(order.SessionID)
+	if err != nil {
+		return errors.New("session not found")
 	}
-
+	if session.Status == "OPEN" && time.Now().After(session.Deadline) {
+		session.Status = "CLOSED"
+		err := s.orderSessionRepo.Update(session)
+		if err != nil {
+			return err
+		}
+		return errors.New("session expired and been closed")
+	}
+	if session.Status == "CLOSED" {
+		return errors.New("session is already closed")
+	}
+	//var order items
 	var newItems []*domain.OrderItems
 	for _, item := range req.Items {
 		if item.Quantity == 0 {
@@ -116,12 +141,14 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		}
 		//check moq
 		if item.Quantity < product.MOQ {
-			return fmt.Errorf("product quantity less than %f", product.MOQ)
+			return fmt.Errorf("product %s: quantity %.0f is less than MOQ %.0f",
+				product.ProductName, item.Quantity, product.MOQ)
 		}
 		//check om
 		if product.OM > 0 {
 			if math.Mod(item.Quantity, product.OM) != 0 {
-				return fmt.Errorf("%s order multiple must be %v (ex: %v, %v...)", product.ProductName, product.OM, product.OM, product.OM*2)
+				return fmt.Errorf("product %s: quantity must be multiple of %.0f (e.g., %.0f, %.0f, %.0f...)",
+					product.ProductName, product.OM, product.OM, product.OM*2, product.OM*3)
 			}
 		}
 		newItems = append(newItems, &domain.OrderItems{
@@ -140,27 +167,6 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		return err
 	}
 	return s.storeOrderItemRepo.Create(newItems...)
-}
-
-func (s *storeOrderService) SubmitOrder(orderId uint) error {
-	order, err := s.storeOrderRepo.FindById(orderId)
-	if err != nil {
-		return errors.New("order not found")
-	}
-	if order.Status != "DRAFT" {
-		return errors.New("can only edit draft orders")
-	}
-	items, err := s.storeOrderItemRepo.FindByOrderId(orderId)
-	if err != nil {
-		return err
-	}
-	if len(items) == 0 {
-		return errors.New("cannot submit empty order")
-	}
-	now := time.Now()
-	order.Status = "SUBMITTED"
-	order.SubmittedAt = &now
-	return s.storeOrderRepo.Update(order)
 }
 
 func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {

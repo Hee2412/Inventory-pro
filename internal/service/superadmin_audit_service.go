@@ -97,17 +97,12 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 	if err != nil {
 		return nil, errors.New("session not found")
 	}
-	store, err := s.userRepo.FindById(storeID)
-	if err != nil {
-		return nil, errors.New("store not found")
-	}
 	//get items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	result := &response.AuditReportItemDetailResponse{
 		SessionTitle: session.Title,
-		StoreName:    store.StoreName,
 		TotalItems:   0,
-		Items:        []response.AuditItemsResponse{},
+		Items:        []*response.AuditItemsResponse{},
 	}
 	if err == nil && len(items) > 0 {
 		result.TotalItems = len(items)

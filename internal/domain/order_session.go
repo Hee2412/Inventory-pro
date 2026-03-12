@@ -8,13 +8,14 @@ type OrderSession struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
 	Title        string    `gorm:"size:255;not null" json:"title"`
 	OrderCycle   string    `gorm:"size:255;not null" json:"order_cycle"`
-	Status       string    `gorm:"size:50" json:"status"`
+	Status       string    `gorm:"size:50,default:'OPEN'" json:"status"`
 	Deadline     time.Time `json:"deadline"`
 	DeliveryDate time.Time `gorm:"type:date" json:"delivery_date"`
 
-	CreatedBy uint      `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedBy uint       `gorm:"column:created_by" json:"created_by"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 func (OrderSession) TableName() string {

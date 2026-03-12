@@ -31,6 +31,7 @@ func (h *OrderSessionHandler) CreateSession(c *gin.Context) {
 		return
 	}
 	createdBy := userID.(uint)
+
 	//call service
 	result, err := h.service.CreateSession(req, createdBy)
 	if err != nil {

@@ -62,27 +62,6 @@ func (s *StoreOrderHandler) UpdateOrder(c *gin.Context) {
 	response.Message(c, "Order updated")
 }
 
-// SubmitOrder POST   /api/store/orders/:orderId/submit
-func (s *StoreOrderHandler) SubmitOrder(c *gin.Context) {
-	orderID, err := getIDParam(c, "orderId")
-	if err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-	_, exists := c.Get("userId")
-	if !exists {
-		response.Unauthorized(c, "Invalid token")
-		return
-	}
-	//call service
-	err = s.service.SubmitOrder(orderID)
-	if err != nil {
-		response.InternalError(c, err.Error())
-		return
-	}
-	response.Message(c, "Order submitted")
-}
-
 // GetOrderDetail GET    /api/store/orders/:orderId
 func (s *StoreOrderHandler) GetOrderDetail(c *gin.Context) {
 	orderID, err := getIDParam(c, "orderId")
