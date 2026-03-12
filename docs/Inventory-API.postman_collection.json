@@ -1,0 +1,1872 @@
+{
+  "info": {
+    "_postman_id": "ff31e163-a398-4f3d-aef6-a8f4069c2077",
+    "name": "INVENTORY-PRO",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "45496133",
+    "_collection_link": "https://go.postman.co/collection/45496133-ff31e163-a398-4f3d-aef6-a8f4069c2077?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "PRODUCTS",
+      "item": [
+        {
+          "name": "USER APIs",
+          "item": [
+            {
+              "name": "Products - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/products",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Get By Id",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/products/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "products",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "ADMIN APIs",
+          "item": [
+            {
+              "name": "Products - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Udpate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Deactivate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products/:id/deactivate",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products",
+                    ":id",
+                    "deactivate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Activate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products/:id/activate",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products",
+                    ":id",
+                    "activate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/products/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "products",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "6"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AUTHS",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login successful\", function () {\r\n    var jsonData = pm.response.json();\r\n    pm.environment.set(\"token\", jsonData.data.token);\r\n    pm.environment.set(\"user_id\", jsonData.data.user.id);\r\n});"
+                ]
+              },
+              "disabled": false
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "USERS",
+      "item": [
+        {
+          "name": "ADMIN APIs",
+          "item": [
+            {
+              "name": "User - Register",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI3OTIwODcsImlhdCI6MTc3MjcwNTY4N30.ux_f0RI4PmaXPVGnTzIYACMo1D-jBdPvFLX3HxUuMKI",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzA3MTkwOTEsImlhdCI6MTc3MDYzMjY5MX0.1oLAv06NHkTkpkult7eyq23xcWXRURJowOJeMtElNkQ"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/register",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    "register"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Get By Id",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "12"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Deactivate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/:id/deactivate",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id",
+                    "deactivate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "12"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Activate",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/:id/activate",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id",
+                    "activate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "12"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Soft Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/users/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "16"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User - Hard Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/users/:id/hard",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "users",
+                    ":id",
+                    "hard"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "14"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyMTM0LCJpYXQiOjE3NzI3MDU3MzR9.kriQXqpSh1DakYUOEf0g3OhgJB5unGY5EtbAjuH0m54",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/api/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ORDER SESSION",
+      "item": [
+        {
+          "name": "ADMIN APIs",
+          "item": [
+            {
+              "name": "Session - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI3OTA2OTUsImlhdCI6MTc3MjcwNDI5NX0.pNHWuwlKmkrqCu8wKbpI2BOduZA80b-Qnu9zwU8paA8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Order - Get By SessionId",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI4MDEwMjEsImlhdCI6MTc3MjcxNDYyMX0.mvv21JPLmMpGOHwclMd5p16yfuiSdVqp9tWetrnQBuE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions/:sessionId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions",
+                    ":sessionId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Session - Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Add to Session",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions/products",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions",
+                    "products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Product - Remove from Sesison",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions/:sessionId/products/:productId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions",
+                    ":sessionId",
+                    "products",
+                    ":productId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    },
+                    {
+                      "key": "productId",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Session - Close",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI3OTA2OTUsImlhdCI6MTc3MjcwNDI5NX0.pNHWuwlKmkrqCu8wKbpI2BOduZA80b-Qnu9zwU8paA8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/sessions/:sessionId/close",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "sessions",
+                    ":sessionId",
+                    "close"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "USER APIs",
+          "item": [
+            {
+              "name": "Order - Get/Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyNTE2LCJpYXQiOjE3NzI3MDYxMTZ9.sVxHuLVnJ2peIjMbg5t-NKUL77C6iqSjcIY-6S61us8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/sessions/:sessionId/order",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "sessions",
+                    ":sessionId",
+                    "order"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Order - Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyNTE2LCJpYXQiOjE3NzI3MDYxMTZ9.sVxHuLVnJ2peIjMbg5t-NKUL77C6iqSjcIY-6S61us8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/store/orders/:orderId/items",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "orders",
+                    ":orderId",
+                    "items"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Order - Submit",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyNTE2LCJpYXQiOjE3NzI3MDYxMTZ9.sVxHuLVnJ2peIjMbg5t-NKUL77C6iqSjcIY-6S61us8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/orders/:orderId/submit",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "orders",
+                    ":orderId",
+                    "submit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Order - Details",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyNTE2LCJpYXQiOjE3NzI3MDYxMTZ9.sVxHuLVnJ2peIjMbg5t-NKUL77C6iqSjcIY-6S61us8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/orders/:orderId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "orders",
+                    ":orderId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Order - Get Mine",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyNzkyNTE2LCJpYXQiOjE3NzI3MDYxMTZ9.sVxHuLVnJ2peIjMbg5t-NKUL77C6iqSjcIY-6S61us8",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/orders",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "orders"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AUDIT",
+      "item": [
+        {
+          "name": "STORE APIs",
+          "item": [
+            {
+              "name": "Audit Item -Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyOTU2MzUwLCJpYXQiOjE3NzI4Njk5NTB9.Bi71hQi_Sy5oyBzSdyNuiZcb8QD8HqB79qcyjjR6HlM",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/store/audit-sessions/:sessionId/items",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "audit-sessions",
+                    ":sessionId",
+                    "items"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Report - Submit",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/store/audit-sessions/:sessionId/submit",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "audit-sessions",
+                    ":sessionId",
+                    "submit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Report - Get Mine",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyOTU2MzUwLCJpYXQiOjE3NzI4Njk5NTB9.Bi71hQi_Sy5oyBzSdyNuiZcb8QD8HqB79qcyjjR6HlM",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/audit-reports",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "audit-reports"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Report - Get By Id",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywicm9sZSI6InN0b3JlIiwiZXhwIjoxNzcyOTU2MzUwLCJpYXQiOjE3NzI4Njk5NTB9.Bi71hQi_Sy5oyBzSdyNuiZcb8QD8HqB79qcyjjR6HlM",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/store/audit-sessions/:sessionId/report",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "store",
+                    "audit-sessions",
+                    ":sessionId",
+                    "report"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "ADMIN APIs",
+          "item": [
+            {
+              "name": "Audit Session - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Get By Id",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions/:sessionId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions",
+                    ":sessionId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Add Products",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions/products",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions",
+                    "products"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Remove Item",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions/:sessionId/products/:productId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "products",
+                    ":productId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "2"
+                    },
+                    {
+                      "key": "productId",
+                      "value": "2"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Close",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions/:id/close",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions",
+                    ":id",
+                    "close"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions/:id",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Create",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8080/api/admin/audit-sessions",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "admin",
+                    "audit-sessions"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "SUPERADMIN APIs",
+          "item": [
+            {
+              "name": "Report - Get All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/audit-sessions/:sessionId/reports",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "reports"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Report - Detail",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/audit-sessions/:sessionId/stores/:storeId",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "stores",
+                    ":storeId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "2"
+                    },
+                    {
+                      "key": "storeId",
+                      "value": "17"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Audit Session - Summary",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/audit-sessions/:sessionId/summary",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "summary"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Report - Approve",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzI5NTg0NDksImlhdCI6MTc3Mjg3MjA0OX0.F0JqdRdXv2My5dAh0-zV2aKMGjD_eziQb7JdkX6bEIs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/audit-sessions/:sessionId/stores/:storeId/approve",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "stores",
+                    ":storeId",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": "1"
+                    },
+                    {
+                      "key": "storeId",
+                      "value": "17"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Report - Decline",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo4LCJyb2xlIjoic3VwZXJfYWRtaW4iLCJleHAiOjE3NzIxOTEyMTMsImlhdCI6MTc3MjEwNDgxM30.6Ysl7YAZoELmzfkuNMBpcr5cEr0rgBCnZcr7JhBDTtE",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:8080/api/superadmin/audit-sessions/:sessionId/stores/:storeId/decline",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8080",
+                  "path": [
+                    "api",
+                    "superadmin",
+                    "audit-sessions",
+                    ":sessionId",
+                    "stores",
+                    ":storeId",
+                    "decline"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sessionId",
+                      "value": ""
+                    },
+                    {
+                      "key": "storeId",
+                      "value": ""
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://",
+          "protocol": "http"
+        }
+      },
+      "response": []
+    }
+  ]
+}
