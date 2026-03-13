@@ -1,34 +1,63 @@
 # Build stage
 FROM golang:1.21-alpine AS builder
 
+# Install dependencies
+RUN apk add --no-cache \
+    git \
+    ca-certificates \
+    tzdata
+
 WORKDIR /app
 
-# Copy go mod files
+# Set Go environment
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# Copy go.mod and go.sum
 COPY go.mod go.sum ./
 
-# Download dependencies
-RUN go mod download
+# Download dependencies with retry
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download && \
+    go mod verify
 
 # Copy source code
 COPY . .
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+# Build binary
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build -ldflags="-w -s" -o main .
 
 # Run stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata
+# Install runtime dependencies
+RUN apk --no-cache add \
+    ca-certificates \
+    tzdata
 
-WORKDIR /root/
+# Create non-root user
+RUN addgroup -g 1000 app && \
+    adduser -D -u 1000 -G app app
 
-# Copy binary
+WORKDIR /app
+
+# Copy binary from builder
 COPY --from=builder /app/main .
+
+# Change ownership
+RUN chown -R app:app /app
+
+# Switch to non-root user
+USER app
 
 EXPOSE 8080
 
-# Healthcheck (optional)
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 CMD ["./main"]
