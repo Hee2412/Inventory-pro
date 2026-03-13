@@ -1,6 +1,12 @@
 cat > .gitignore << 'EOF'
 # Environment
 .env
+.env.local
+.env.*.local
+
+#Binarires
+main
+inventory-app
 
 # Build
 bin/
@@ -11,6 +17,7 @@ tmp/
 # IDE
 .idea/
 .vscode/
+*.swp
 
 # OS
 .DS_Store
@@ -24,3 +31,6 @@ go.sum
 # Dependencies
 node_modules/
 EOF
+
+# Docker
+docker-compose.overide.yml

@@ -1,29 +1,54 @@
-version: '3.8'
-
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inventory-app
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - PORT=8080
+      DATABASE_URL: "postgres://admin:secretpassword@db:5432/inventory?sslmode=disable"
+      JWT_SECRET: "${JWT_SECRET:-CHANGE-THIS-SECRET-IN-PRODUCTION}"
+      JWT_EXPIRES_HOURS: "24"
+      PORT: "8080"
+      ENV: "production"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - inventory-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   db:
     image: postgres:15-alpine
+    container_name: inventory-db
     environment:
-      - POSTGRES_DB=inventory
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secretpassword
+      POSTGRES_DB: inventory
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - inventory-network
 
 volumes:
   postgres_data:
+
+networks:
+  inventory-network:
+    driver: bridge
