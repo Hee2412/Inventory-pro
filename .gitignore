@@ -1,36 +1,101 @@
-cat > .gitignore << 'EOF'
-# Environment
+# 1. Status - .env KHÔNG được list
+git status
+
+# Should NOT see:
+# ❌ .env
+# ❌ main
+# ❌ *.exe
+
+# Should see:
+# ✅ .gitignore
+# ✅ Source code files
+
+# 2. Check gitignore working
+git check-ignore -v .env
+
+# Should output:
+# .gitignore:X:.env    .env
+
+# 3. Safe to push
+git push
+```
+
+---
+
+## 🎯 **COMPLETE .gitignore (Copy này):**
+```
+# === Binaries ===
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+inventory-app
+inventory-pro
+
+# === Go ===
+*.test
+*.out
+go.work
+
+# === Environment (CRITICAL!) ===
 .env
 .env.local
 .env.*.local
+.env.development
+.env.production
+.env.staging
 
-#Binarires
-main
-inventory-app
-
-# Build
-bin/
-tmp/
-*.exe
-*.exe~
-
-# IDE
-.idea/
+# === IDE ===
 .vscode/
+.idea/
 *.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 
-# OS
+# === OS ===
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Go
+# === Logs ===
 *.log
-vendor/
-go.sum
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Dependencies
-node_modules/
-EOF
+# === Docker ===
+docker-compose.override.yml
 
-# Docker
-docker-compose.overide.yml
+# === Temp ===
+tmp/
+temp/
+*.tmp
+
+# === Database ===
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# === Coverage ===
+coverage.html
+*.coverprofile
+
+# === Build ===
+dist/
+build/
+bin/
+
+# === Dependencies (optional) ===
+# vendor/  # Uncomment if NOT using vendor
