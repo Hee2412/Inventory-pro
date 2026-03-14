@@ -51,6 +51,12 @@ func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.Limit <= 0 {
+		params.Limit = 20
+	}
 	//call service
 	sessions, total, err := h.service.GetAllSessions(params)
 	if err != nil {

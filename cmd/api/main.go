@@ -10,6 +10,7 @@ import (
 	"Inventory-pro/internal/service"
 	"Inventory-pro/pkg/database"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 )
 
@@ -30,6 +31,23 @@ func main() {
 		log.Fatal("Failed to auto migrate database", err)
 	}
 	log.Printf("Database migrated")
+
+	var count int64
+	db.Model(&domain.User{}).Where("username = ?", "superadmin").Count(&count)
+	if count == 0 {
+		log.Println("🌱 Seeding superadmin...")
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("superadmin123"), bcrypt.DefaultCost)
+		superAdmin := domain.User{
+			Username: "superadmin",
+			Password: string(hashedPassword),
+			Role:     "super_admin",
+			IsActive: true,
+			// ... các field khác
+		}
+		// Hash password ở đây rồi mới Save
+		db.Create(&superAdmin)
+		log.Println("✅ Superadmin created!")
+	}
 
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)

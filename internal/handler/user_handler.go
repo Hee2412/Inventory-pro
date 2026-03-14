@@ -34,6 +34,12 @@ func (uh *UserHandler) GetAllUsers(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.Limit <= 0 {
+		params.Limit = 20
+	}
 	users, total, err := uh.userHandler.SearchAndFilter(params)
 	if err != nil {
 		response.InternalError(c, err.Error())

@@ -78,6 +78,12 @@ func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.Limit <= 0 {
+		params.Limit = 20
+	}
 	orders, total, err := a.service.GetAllPaginatedSessions(params)
 	if err != nil {
 		response.InternalError(c, err.Error())

@@ -124,7 +124,7 @@ func (u *userRepository) SearchAndFilter(params request.UserSearchParams) ([]*do
 	if params.Search != "" {
 		searchTerm := "%" + params.Search + "%"
 		query = query.Where(
-			"email LIKE ? OR store_name LIKE ?",
+			"username LIKE ? OR store_name LIKE ?",
 			searchTerm, searchTerm,
 		)
 	}

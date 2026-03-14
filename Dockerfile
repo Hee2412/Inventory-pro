@@ -29,7 +29,7 @@ COPY . .
 # Build binary
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go build -ldflags="-w -s" -o main .
+    go build -ldflags="-w -s" -o main ./cmd/api
 
 # Run stage
 FROM alpine:latest
