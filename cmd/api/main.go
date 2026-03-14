@@ -20,12 +20,16 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect database", err)
 	}
-	_ = db.AutoMigrate(
+	err = db.AutoMigrate(
 		&domain.User{}, &domain.Product{},
 		&domain.StoreOrder{}, &domain.OrderSession{},
 		&domain.OrderSessionProduct{}, &domain.OrderItems{},
 		&domain.AuditSession{}, &domain.StoreAuditReport{},
 	)
+	if err != nil {
+		log.Fatal("Failed to auto migrate database", err)
+	}
+	log.Printf("Database migrated")
 
 	userRepo := repository.NewUserRepository(db)
 	productRepo := repository.NewProductRepository(db)
