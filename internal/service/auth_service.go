@@ -8,11 +8,12 @@ import (
 	"Inventory-pro/pkg/jwt"
 	password2 "Inventory-pro/pkg/password"
 	"errors"
+	"time"
 )
 
 type AuthService interface {
 	Login(username string, password string) (string, *domain.User, error)
-	Register(creatorRole string, req request.RegisterRequest) error
+	Register(creatorID *uint, creatorRole string, req request.RegisterRequest) error
 	GetProfile(userId uint) (*domain.User, error)
 }
 type authService struct {
@@ -39,10 +40,16 @@ func (s *authService) Login(username string, password string) (string, *domain.U
 	if err != nil {
 		return "", nil, err
 	}
+	lastLogin := time.Now()
+	user.LastLogin = &lastLogin
+	err = s.userRepo.Update(user)
+	if err != nil {
+		return "", nil, err
+	}
 	return token, user, nil
 }
 
-func (s *authService) Register(creatorRole string, req request.RegisterRequest) error {
+func (s *authService) Register(creatorID *uint, creatorRole string, req request.RegisterRequest) error {
 	if existingUser, _ := s.userRepo.FindByUsername(req.Username); existingUser != nil {
 		return errors.New("user already exists")
 	}
@@ -50,9 +57,11 @@ func (s *authService) Register(creatorRole string, req request.RegisterRequest) 
 	if err != nil {
 		return err
 	}
+
 	newUser := &domain.User{
-		Username: req.Username,
-		Password: hashedPassword,
+		Username:  req.Username,
+		Password:  hashedPassword,
+		CreatedBy: creatorID,
 	}
 
 	switch req.Role {

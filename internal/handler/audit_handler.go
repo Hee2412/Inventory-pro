@@ -42,9 +42,8 @@ func (a *AuditSessionHandler) CreateAuditSession(c *gin.Context) {
 
 // GetAllAuditSession GET /api/superadmin/audit-sessions
 func (a *AuditSessionHandler) GetAllAuditSession(c *gin.Context) {
-	param := pagination.ParseParams(c)
 	var params request.AuditSessionSearchParams
-	if err := c.ShouldBindQuery(&param); err != nil {
+	if err := c.ShouldBindQuery(&params); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}

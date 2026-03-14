@@ -13,7 +13,7 @@ type UserResponse struct {
 	StoreCode string         `json:"store_code"`
 	IsActive  bool           `json:"is_active"`
 	CreateAt  time.Time      `json:"create_at"`
-	LastLogin *time.Time     `json:"last_login"`
+	LastLogin string         `json:"last_login"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
 }
 

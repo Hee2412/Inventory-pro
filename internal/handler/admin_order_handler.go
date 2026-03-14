@@ -71,10 +71,9 @@ func (a *AdminOrderHandler) DeclineOrder(c *gin.Context) {
 }
 
 func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
-	param := pagination.ParseParams(c)
 	//check request
 	var params request.OrderSearchParams
-	if err := c.ShouldBindQuery(&param); err != nil {
+	if err := c.ShouldBindQuery(&params); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}

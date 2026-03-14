@@ -7,6 +7,7 @@ import (
 	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/password"
 	"errors"
+	"time"
 )
 
 type UserService interface {
@@ -18,7 +19,6 @@ type UserService interface {
 
 	DeleteUser(userId uint) error
 	HardDeleteUser(userId uint) error
-	GetAllUsersPaginated(page, limit int) ([]*response.UserResponse, int64, error)
 	SearchAndFilter(params request.UserSearchParams) ([]*response.UserResponse, int64, error)
 }
 
@@ -30,6 +30,12 @@ func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{userRepo: repo}
 }
 func toUserResponse(user *domain.User) *response.UserResponse {
+	var lastLogin string
+	if user.LastLogin != nil {
+		lastLogin = user.LastLogin.Format(time.DateTime)
+	} else {
+		lastLogin = ""
+	}
 	return &response.UserResponse{
 		ID:        user.ID,
 		Username:  user.Username,
@@ -38,7 +44,7 @@ func toUserResponse(user *domain.User) *response.UserResponse {
 		StoreCode: user.StoreCode,
 		IsActive:  user.IsActive,
 		CreateAt:  user.CreatedAt,
-		LastLogin: user.LastLogin,
+		LastLogin: lastLogin,
 		DeletedAt: user.DeletedAt,
 	}
 }
@@ -136,18 +142,6 @@ func (s *userService) HardDeleteUser(userId uint) error {
 		return errors.New("this user is not deleted yet")
 	}
 	return s.userRepo.HardDelete(userId)
-}
-
-func (s *userService) GetAllUsersPaginated(page, limit int) ([]*response.UserResponse, int64, error) {
-	users, total, err := s.userRepo.FindAllPaginated(page, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-	var result []*response.UserResponse
-	for _, user := range users {
-		result = append(result, toUserResponse(user))
-	}
-	return result, total, nil
 }
 
 func (s *userService) SearchAndFilter(params request.UserSearchParams) ([]*response.UserResponse, int64, error) {

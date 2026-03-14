@@ -44,10 +44,9 @@ func (h *OrderSessionHandler) CreateSession(c *gin.Context) {
 
 // GetAllSessions GET /api/admin/sessions
 func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
-	param := pagination.ParseParams(c)
 	//check request
 	var params request.SessionSearchParams
-	if err := c.ShouldBindQuery(&param); err != nil {
+	if err := c.ShouldBindQuery(&params); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}

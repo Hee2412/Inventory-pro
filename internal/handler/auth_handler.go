@@ -28,6 +28,7 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 		response.Unauthorized(c, "Invalid token")
 		return
 	}
+
 	result := response.LoginResponse{
 		Token:     token,
 		ID:        user.ID,
@@ -42,15 +43,19 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 // Register POST /api/admin/register
 func (handler *AuthHandler) Register(c *gin.Context) {
 	var req request.RegisterRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-
+	id, exists := c.Get("userId")
+	if !exists {
+		response.BadRequest(c, "user id not found")
+		return
+	}
+	creatorID := id.(uint)
 	creatorRol, _ := c.Get("role")
 	roleStr, _ := creatorRol.(string)
-	err := handler.authService.Register(roleStr, req)
+	err := handler.authService.Register(&creatorID, roleStr, req)
 	if err != nil {
 		response.BadRequest(c, err.Error())
 		return
