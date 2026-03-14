@@ -20,22 +20,43 @@ func Connect(dsn string) (*gorm.DB, error) {
 			IgnoreRecordNotFoundError: true,
 		})
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
-	})
+	var db *gorm.DB
+	var err error
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	maxRetries := 10
+	retryDelay := 3 * time.Second
+
+	log.Println("🔄 Attempting to connect to database...")
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+			Logger: newLogger,
+		})
+
+		if err == nil {
+			// Test connection
+			sqlDB, err := db.DB()
+			if err == nil {
+				err = sqlDB.Ping()
+				if err == nil {
+					log.Println("✅ Successfully connected to database")
+
+					// Configure connection pool
+					sqlDB.SetMaxIdleConns(10)
+					sqlDB.SetMaxOpenConns(100)
+					sqlDB.SetConnMaxLifetime(time.Hour)
+
+					return db, nil
+				}
+			}
+		}
+
+		log.Printf("⚠️  Database connection attempt %d/%d failed: %v", i+1, maxRetries, err)
+		if i < maxRetries-1 {
+			log.Printf("⏳ Retrying in %v...", retryDelay)
+			time.Sleep(retryDelay)
+		}
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
-
-	return db, nil
+	return nil, fmt.Errorf("❌ failed to connect to database after %d attempts: %w", maxRetries, err)
 }

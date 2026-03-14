@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod verify
 
 # Copy source code
-COPY . .d
+COPY . .
 
 # Build binary
 RUN --mount=type=cache,target=/go/pkg/mod \
