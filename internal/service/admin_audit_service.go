@@ -4,7 +4,7 @@ import (
 	"Inventory-pro/internal/domain"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -14,6 +14,7 @@ type SuperAdminAuditService interface {
 	GetAuditSummary(sessionID uint) (*response.AuditSummaryResponse, error)
 	ApproveStoreReport(storeID uint, sessionID uint, adminID uint) error
 	DeclineStoreReport(storeID uint, sessionID uint, reason string, adminID uint) error
+	GetIncompleteAudit(sessionID uint) (*response.AuditTrackingResponse, error)
 }
 
 type superAdminAuditService struct {
@@ -64,7 +65,7 @@ func (s *superAdminAuditService) GetAllReportsInSession(sessionID uint) ([]respo
 	// check session
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		return nil, domain.ErrNotFound
 	}
 	//get all reports
 	reports, err := s.storeAuditRepo.FindByAuditSessionID(session.ID)
@@ -95,7 +96,7 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 	//get session info
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		return nil, domain.ErrNotFound
 	}
 	//get items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
@@ -114,11 +115,11 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.AuditSummaryResponse, error) {
 	reports, err := s.storeAuditRepo.FindByAuditSessionID(sessionID)
 	if err != nil {
-		return nil, errors.New("no record found")
+		return nil, domain.ErrNotFound
 	}
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		return nil, domain.ErrNotFound
 	}
 
 	//create mapping, group items by store
@@ -180,14 +181,14 @@ func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint
 	//get all items
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
-		return errors.New("cant get items")
+		return fmt.Errorf("%w: failed to fetch store audit for store %d: %v", domain.ErrDatabase, storeID, err)
 	}
 	if len(items) == 0 {
-		return errors.New("no record found")
+		return domain.ErrNotFound
 	}
 	status := getStoreStatus(items)
 	if status != "DRAFT" {
-		return errors.New("can only approve submitted reports")
+		return fmt.Errorf("%w: only reports in DRAFT status can be approved", domain.ErrInvalidInput)
 	}
 
 	updateData := map[string]interface{}{
@@ -195,21 +196,25 @@ func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint
 		"approved_at": time.Now(),
 		"approved_by": adminID,
 	}
-	return s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
+	err = s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update report status: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (s *superAdminAuditService) DeclineStoreReport(storeID uint, sessionID uint, reason string, adminID uint) error {
 	//get all items
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
-		return errors.New("cant get items")
+		return fmt.Errorf("%w: failed to fetch store audit for store %d: %v", domain.ErrDatabase, storeID, err)
 	}
 	if len(items) == 0 {
-		return errors.New("no record found")
+		return domain.ErrNotFound
 	}
 	status := getStoreStatus(items)
 	if status != "DRAFT" {
-		return errors.New("can only decline store reports")
+		return fmt.Errorf("%w: only reports in DRAFT status can be approved", domain.ErrInvalidInput)
 	}
 
 	updateData := map[string]interface{}{
@@ -218,5 +223,59 @@ func (s *superAdminAuditService) DeclineStoreReport(storeID uint, sessionID uint
 		"approved_by": adminID,
 		"reason":      reason,
 	}
-	return s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
+	err = s.storeAuditRepo.UpdateStatusByStore(storeID, sessionID, updateData)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update report status: %v", domain.ErrDatabase, err)
+	}
+	return nil
+}
+
+func (s *superAdminAuditService) GetIncompleteAudit(sessionID uint) (*response.AuditTrackingResponse, error) {
+	stores, err := s.userRepo.FindByRoleAndActive("store", true)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrDatabase, err)
+	}
+	session, err := s.auditSessionRepo.FindById(sessionID)
+	if err != nil {
+		return nil, domain.ErrSessionNotFound
+	}
+	allReports, err := s.storeAuditRepo.FindByAuditSessionID(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrInternalServer, err)
+	}
+	reportMap := make(map[uint][]*domain.StoreAuditReport)
+	for _, r := range allReports {
+		reportMap[r.StoreID] = append(reportMap[r.StoreID], r)
+	}
+
+	var incompleteStores []*response.StoreTracking
+	completedCount := 0
+
+	for _, store := range stores {
+		reports := reportMap[store.ID]
+		if len(reports) == 0 {
+			continue
+		}
+
+		hasUpdated := false
+		for _, report := range reports {
+			if report.UpdatedAt.After(session.CreatedAt) {
+				hasUpdated = true
+				break
+			}
+		}
+		if hasUpdated {
+			completedCount++
+		} else {
+			incompleteStores = append(incompleteStores, &response.StoreTracking{
+				StoreID:   store.ID,
+				StoreName: store.StoreName,
+			})
+		}
+	}
+	return &response.AuditTrackingResponse{
+		Completed:       completedCount,
+		Incomplete:      len(incompleteStores),
+		IncompleteStore: incompleteStores,
+	}, nil
 }

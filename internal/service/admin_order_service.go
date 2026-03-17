@@ -5,7 +5,7 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -14,19 +14,23 @@ type AdminOrderService interface {
 	ApproveOrder(orderId uint) error
 	DeclineOrder(orderId uint, reason string) error
 	GetAllPaginatedSessions(params request.OrderSearchParams) ([]*response.OrderResponse, int64, error)
+	GetStoreWithOutOrder(sessionID uint) (*response.StoreWithoutOrderResponse, error)
 }
 
 type adminOrderService struct {
 	orderSessionRepo repository.OrderSessionRepository
 	storeOrderRepo   repository.StoreOrderRepository
+	userRepo         repository.UserRepository
 }
 
 func NewAdminOrderService(
 	orderSessionRepo repository.OrderSessionRepository,
-	storeOrderRepo repository.StoreOrderRepository) AdminOrderService {
+	storeOrderRepo repository.StoreOrderRepository,
+	userRepo repository.UserRepository) AdminOrderService {
 	return &adminOrderService{
 		orderSessionRepo: orderSessionRepo,
-		storeOrderRepo:   storeOrderRepo}
+		storeOrderRepo:   storeOrderRepo,
+		userRepo:         userRepo}
 }
 
 func toOrderInSessionResponse(order *domain.StoreOrder) *response.AdminOrderInSessionResponse {
@@ -54,7 +58,7 @@ func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.Ad
 	//var sessionID
 	_, err := a.orderSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		return nil, domain.ErrNotFound
 	}
 	//mapping to orderSessionResponse
 	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
@@ -72,36 +76,45 @@ func (a *adminOrderService) ApproveOrder(orderId uint) error {
 	//Find orderByID
 	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
-		return errors.New("order not found")
+		return domain.ErrNotFound
 	}
 	//Check status ("Submitted")
-	if order.Status != "SUBMITTED" {
-		return errors.New("order status is not SUBMITTED")
+	if order.Status != "SUBMITTED" && order.Status != "NO_ORDER" {
+		return fmt.Errorf("%w: cannot approve order with current status: %s", domain.ErrInvalidInput, order.Status)
+	}
+	if order.Status == "UNSUBMITTED_EXPIRED" {
+		return fmt.Errorf("%w: this order has expired without store interaction", domain.ErrInvalidInput)
 	}
 	//Change status ("Approved")
 	order.Status = "APPROVED"
-	//Approve By/At
-	var now = time.Now()
+	now := time.Now()
 	order.ApproveAt = &now
-	//Save/Update
-	return a.storeOrderRepo.Update(order)
+	err = a.storeOrderRepo.Update(order)
+	if err != nil {
+		return fmt.Errorf("%w: failed to approve order: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
 	//Find orderByID
 	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
-		return errors.New("order not found")
+		return domain.ErrNotFound
 	}
 	//Check status ("Submitted")
-	if order.Status != "SUBMITTED" {
-		return errors.New("order status is not SUBMITTED")
+	if order.Status == "DRAFT" {
+		return fmt.Errorf("%w: only reports in SUBMITTED status can be decline", domain.ErrInvalidInput)
 	}
 	//Change status ("Declined")
 	order.Status = "DECLINED"
 	order.Note = reason
 	//Save/Update
-	return a.storeOrderRepo.Update(order)
+	err = a.storeOrderRepo.Update(order)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update status: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (a *adminOrderService) GetAllPaginatedSessions(params request.OrderSearchParams) ([]*response.OrderResponse, int64, error) {
@@ -114,4 +127,40 @@ func (a *adminOrderService) GetAllPaginatedSessions(params request.OrderSearchPa
 		result = append(result, toOrderResponse(session))
 	}
 	return result, total, nil
+}
+
+func (a *adminOrderService) GetStoreWithOutOrder(sessionID uint) (*response.StoreWithoutOrderResponse, error) {
+	stores, err := a.userRepo.FindByRoleAndActive("store", true)
+	if err != nil {
+		return nil, domain.ErrDatabase
+	}
+	session, err := a.orderSessionRepo.FindById(sessionID)
+	if err != nil {
+		return nil, domain.ErrNotFound
+	}
+	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
+	if err != nil {
+		return nil, domain.ErrNotFound
+	}
+	confirmedOrder := make(map[uint]bool)
+	for _, order := range orders {
+		if order.ConfirmedAt != nil {
+			confirmedOrder[order.StoreID] = true
+		}
+	}
+	var notConfirmedStores []*response.StoreTrackingResponse
+	for _, store := range stores {
+		if !confirmedOrder[store.ID] {
+			notConfirmedStores = append(notConfirmedStores, &response.StoreTrackingResponse{
+				StoreID:   store.ID,
+				StoreName: store.StoreName,
+			})
+		}
+	}
+	return &response.StoreWithoutOrderResponse{
+		SessionID:         sessionID,
+		SessionName:       session.Title,
+		NotOrdered:        len(notConfirmedStores),
+		StoreWithoutOrder: notConfirmedStores,
+	}, nil
 }

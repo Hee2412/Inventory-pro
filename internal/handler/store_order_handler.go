@@ -93,3 +93,22 @@ func (s *StoreOrderHandler) GetMyOrder(c *gin.Context) {
 	}
 	response.Success(c, result)
 }
+
+// UpdateStatus PUT /api/store/orders/:orderId
+func (s *StoreOrderHandler) UpdateStatus(c *gin.Context) {
+	orderID, err := getIDParam(c, "orderId")
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+	updatedOrder, err := s.service.UpdateStatus(orderID)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	msg := "Status updated to DRAFT"
+	if updatedOrder.Status == "NO_ORDER" {
+		msg = "Confirmed no order"
+	}
+	response.Message(c, msg)
+}

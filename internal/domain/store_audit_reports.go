@@ -18,7 +18,7 @@ type StoreAuditReport struct {
 	ActualStock  float64      `json:"actual_stock"`
 	Variance     float64      `json:"variance"`
 	Status       string       `gorm:"size:50" json:"status"`
-	UpdatedAt    time.Time    `json:"updated_at"`
+	UpdatedAt    *time.Time   `json:"updated_at"`
 	ApprovedAt   *time.Time   `json:"approved_at"`
 	ApprovedBy   uint         `json:"approved_by"`
 }

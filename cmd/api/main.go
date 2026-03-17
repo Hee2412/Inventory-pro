@@ -69,7 +69,7 @@ func main() {
 	orderSessionHandler := handler.NewOrderSessionHandler(orderSessionService)
 	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo, productRepo)
 	storeOrderHandler := handler.NewStoreOrderHandler(storeOrderService)
-	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo)
+	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo, userRepo)
 	adminOrderHandler := handler.NewAdminOrderHandler(adminOrderService)
 
 	auditSessionService := service.NewAuditSessionService(auditSessionRepo, storeAuditRepo, userRepo, productRepo)
@@ -108,6 +108,7 @@ func main() {
 		storeProtected.PUT("/orders/:orderId/items", storeOrderHandler.UpdateOrder)
 		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
 		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
+		storeProtected.PUT("/orders/:orderId", storeOrderHandler.UpdateStatus)
 		//audit routes
 		storeProtected.PUT("/audit-sessions/:sessionId/items", storeAuditHandler.UpdateAuditItem)
 		storeProtected.GET("/audit-reports", storeAuditHandler.GetMyAuditReport)

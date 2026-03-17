@@ -11,6 +11,7 @@ type StoreAuditReportRepository interface {
 	FindByAuditSessionAndStore(storeId uint, auditSession uint) ([]*domain.StoreAuditReport, error)
 	FindByAuditSessionID(sessionId uint) ([]*domain.StoreAuditReport, error)
 	FindBySessionAndProduct(sessionId uint, productId uint) ([]*domain.StoreAuditReport, error)
+	FindBySessionAndStore(sessionId uint, storeId uint) (*domain.StoreAuditReport, error)
 	FindByStoreId(storeId uint) ([]*domain.StoreAuditReport, error)
 	Update(storeAuditReport *domain.StoreAuditReport) error
 	FindBySessionStoreAndProduct(sessionID uint, storeID uint, productID uint) (*domain.StoreAuditReport, error)
@@ -107,4 +108,13 @@ func (s *storeAuditRepository) UpdateStatusByStore(storeID, sessionID uint, data
 	return s.db.Model(&domain.StoreAuditReport{}).
 		Where("store_id = ? AND session_id = ?", storeID, sessionID).
 		Updates(data).Error
+}
+
+func (s *storeAuditRepository) FindBySessionAndStore(sessionI uint, storeID uint) (*domain.StoreAuditReport, error) {
+	var storeAuditReport domain.StoreAuditReport
+	err := s.db.Where("session_id = ? AND store_id = ?", sessionI, storeID).First(&storeAuditReport).Error
+	if err != nil {
+		return nil, err
+	}
+	return &storeAuditReport, nil
 }

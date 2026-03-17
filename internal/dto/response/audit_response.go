@@ -1,6 +1,8 @@
 package response
 
-import "time"
+import (
+	"time"
+)
 
 type AuditSessionResponse struct {
 	SessionID uint      `json:"session_id"`
@@ -51,4 +53,15 @@ type StoreIssue struct {
 	StoreName string  `json:"store_name"`
 	Variance  float64 `json:"variance"`
 	Status    string  `json:"status"`
+}
+
+type AuditTrackingResponse struct {
+	Completed       int              `json:"completed"`
+	Incomplete      int              `json:"incomplete"`
+	IncompleteStore []*StoreTracking `json:"incomplete_store"`
+}
+
+type StoreTracking struct {
+	StoreID   uint   `json:"store_id"`
+	StoreName string `json:"store_name"`
 }

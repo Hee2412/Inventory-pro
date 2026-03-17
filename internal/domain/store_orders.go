@@ -12,8 +12,10 @@ type StoreOrder struct {
 	ApproveAt   *time.Time `json:"approve_at,omitempty"`
 	ApproveBy   *uint      `json:"approve_by,omitempty"`
 	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	UpdatedAt   *time.Time `json:"updated_at"`
 	Note        string     `json:"note"`
+	ConfirmedAt *time.Time `json:"confirm_at,omitempty"`
+	ReceivedAt  *time.Time `json:"received_at,omitempty"`
 }
 
 func (StoreOrder) TableName() string {

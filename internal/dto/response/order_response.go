@@ -62,3 +62,15 @@ type OrderResponse struct {
 	Status    string `json:"status"`
 	SessionID uint   `json:"session_id"`
 }
+
+type StoreWithoutOrderResponse struct {
+	SessionID         uint                     `json:"session_id"`
+	SessionName       string                   `json:"session_name"`
+	NotOrdered        int                      `json:"not_order"`
+	StoreWithoutOrder []*StoreTrackingResponse `json:"store_without_order"`
+}
+
+type StoreTrackingResponse struct {
+	StoreID   uint   `json:"store_id"`
+	StoreName string `json:"store_name"`
+}

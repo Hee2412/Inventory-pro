@@ -14,6 +14,7 @@ type OrderSessionRepository interface {
 	Update(orderSession *domain.OrderSession) error
 	Delete(id uint) error
 	FindAllPaginated(params request.SessionSearchParams) ([]*domain.OrderSession, int64, error)
+	GetOrderTracking(sessionID uint, status string) ([]*domain.OrderSession, error)
 }
 
 type orderSessionRepository struct {
@@ -67,7 +68,6 @@ func (o *orderSessionRepository) FindAllPaginated(params request.SessionSearchPa
 	var orderSessions []*domain.OrderSession
 	var total int64
 	query := o.db.Model(&domain.OrderSession{})
-
 	if params.Status != "" {
 		query = query.Where("status = ?", params.Status)
 	}
@@ -83,4 +83,17 @@ func (o *orderSessionRepository) FindAllPaginated(params request.SessionSearchPa
 		Order("created_at DESC").
 		Find(&orderSessions).Error
 	return orderSessions, total, err
+}
+
+func (o *orderSessionRepository) GetOrderTracking(sessionID uint, status string) ([]*domain.OrderSession, error) {
+	var orderSessions []*domain.OrderSession
+	query := o.db.Model(&domain.OrderSession{})
+	if sessionID != 0 {
+		query = query.Where("session_id = ?", sessionID)
+	}
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	err := query.Order("created_at DESC").Find(&orderSessions).Error
+	return orderSessions, err
 }

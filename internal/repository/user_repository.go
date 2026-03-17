@@ -17,6 +17,7 @@ type UserRepository interface {
 
 	FindByRole(role string) ([]*domain.User, error)
 	FindActiveUsers() ([]*domain.User, error)
+	FindByRoleAndActive(role string, active bool) ([]*domain.User, error)
 	CountByRole(role string) (int64, error)
 	SearchAndFilter(params request.UserSearchParams) ([]*domain.User, int64, error)
 }
@@ -73,21 +74,21 @@ func (u *userRepository) HardDelete(id uint) error {
 }
 
 func (u *userRepository) FindByRole(role string) ([]*domain.User, error) {
-	var user []*domain.User
-	err := u.db.Where("role = ?", role).Find(&user).Error
+	var users []*domain.User
+	err := u.db.Where("role = ?", role).Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return users, nil
 }
 
 func (u *userRepository) FindActiveUsers() ([]*domain.User, error) {
-	var user []*domain.User
-	err := u.db.Where("is_active = true").Find(&user).Error
+	var users []*domain.User
+	err := u.db.Where("is_active = true").Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return users, nil
 }
 
 func (u *userRepository) CountByRole(role string) (int64, error) {
@@ -128,4 +129,13 @@ func (u *userRepository) SearchAndFilter(params request.UserSearchParams) ([]*do
 		Order("created_at DESC").
 		Find(&users).Error
 	return users, total, err
+}
+
+func (u *userRepository) FindByRoleAndActive(role string, active bool) ([]*domain.User, error) {
+	var users []*domain.User
+	err := u.db.Where("role = ? AND is_active = ?", role, active).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

@@ -17,6 +17,7 @@ type StoreOrderService interface {
 	GetOrderDetail(orderID uint) (*response.StoreOrderDetailResponse, error)
 	GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error)
 	GetAllPaginatedOrders(params request.OrderSearchParams) ([]*response.StoreOrderResponse, int64, error)
+	UpdateStatus(OrderID uint) (*domain.StoreOrder, error)
 }
 
 type storeOrderService struct {
@@ -71,21 +72,29 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 	//call session
 	session, err := s.orderSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
-	}
-	//check deadline
-	if session.Status == "OPEN" && time.Now().After(session.Deadline) {
-		session.Status = "CLOSED"
-		err := s.orderSessionRepo.Update(session)
-		if err != nil {
-			return nil, err
-		}
-		return nil, errors.New("session is expired and been closed")
+		return nil, domain.ErrNotFound
 	}
 	//check session status
 	if session.Status == "CLOSED" {
-		return nil, errors.New("session is closed")
+		return nil, domain.ErrSessionClosed
 	}
+	//check deadline
+	if time.Now().After(session.Deadline) {
+		order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
+		if err != nil {
+			order = &domain.StoreOrder{
+				SessionID: sessionID,
+				StoreID:   storeID,
+				Status:    "UNSUBMITTED_EXPIRED",
+			}
+			_ = s.storeOrderRepo.Create(order)
+		} else if order.Status == "DRAFT" {
+			order.Status = "UNSUBMITTED_EXPIRED"
+			_ = s.storeOrderRepo.Update(order)
+		}
+		return nil, domain.ErrSessionClosed
+	}
+
 	//check condition get or create order
 	order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
 	if err != nil {
@@ -96,7 +105,7 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 		}
 		err = s.storeOrderRepo.Create(order)
 		if err != nil {
-			return nil, err
+			return nil, domain.ErrDatabase
 		}
 	}
 	items, _ := s.storeOrderItemRepo.FindByOrderId(order.ID)
@@ -111,24 +120,24 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 	//find order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
-		return errors.New("order not found")
+		return domain.ErrNotFound
 	}
 	//check session
 	session, err := s.orderSessionRepo.FindById(order.SessionID)
 	if err != nil {
-		return errors.New("session not found")
-	}
-	if session.Status == "OPEN" && time.Now().After(session.Deadline) {
-		session.Status = "CLOSED"
-		err := s.orderSessionRepo.Update(session)
-		if err != nil {
-			return err
-		}
-		return errors.New("session expired and been closed")
+		return domain.ErrNotFound
 	}
 	if session.Status == "CLOSED" {
-		return errors.New("session is already closed")
+		return domain.ErrSessionClosed
 	}
+	if time.Now().After(session.Deadline) {
+		if order.Status == "DRAFT" {
+			order.Status = "UNSUBMITTED_EXPIRED"
+			_ = s.storeOrderRepo.Update(order)
+		}
+		return fmt.Errorf("%w: deadline exceeded at %v", domain.ErrSessionClosed, session.Deadline)
+	}
+
 	//var order items
 	var newItems []*domain.OrderItems
 	for _, item := range req.Items {
@@ -160,13 +169,24 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		})
 	}
 	if len(newItems) == 0 {
-		return errors.New("no valid items found")
+		return domain.ErrInvalidInput
 	}
 	err = s.storeOrderItemRepo.DeleteByOrderId(orderID)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: clear old items failed: %v", domain.ErrDatabase, err)
 	}
-	return s.storeOrderItemRepo.Create(newItems...)
+	now := time.Now()
+	order.Status = "SUBMITTED"
+	order.ConfirmedAt = &now
+	err = s.storeOrderRepo.Update(order)
+	if err != nil {
+		return fmt.Errorf("%w: update failed: %v", domain.ErrDatabase, err)
+	}
+	err = s.storeOrderItemRepo.Create(newItems...)
+	if err != nil {
+		return fmt.Errorf("%w: create new items failed: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {
@@ -214,4 +234,32 @@ func (s *storeOrderService) GetAllPaginatedOrders(params request.OrderSearchPara
 		result = append(result, toStoreOrderResponse(order))
 	}
 	return result, total, nil
+}
+
+func (s *storeOrderService) UpdateStatus(OrderID uint) (*domain.StoreOrder, error) {
+	order, err := s.storeOrderRepo.FindById(OrderID)
+	if err != nil {
+		return nil, errors.New("order not found")
+	}
+	session, err := s.orderSessionRepo.FindById(order.SessionID)
+	if err != nil {
+		return nil, errors.New("session not found")
+	}
+	if session.Status == "CLOSE" {
+		return nil, errors.New("session is close")
+	}
+	now := time.Now()
+	if order.Status == "DRAFT" {
+		order.Status = "NO_ORDER"
+		order.ConfirmedAt = &now
+	} else if order.Status == "NO_ORDER" {
+		order.Status = "DRAFT"
+		order.ConfirmedAt = nil
+		order.UpdatedAt = &now
+	}
+	err = s.storeOrderRepo.Update(order)
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
 }
