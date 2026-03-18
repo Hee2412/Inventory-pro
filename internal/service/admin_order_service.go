@@ -5,7 +5,9 @@ import (
 	"Inventory-pro/internal/dto/request"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -31,27 +33,6 @@ func NewAdminOrderService(
 		orderSessionRepo: orderSessionRepo,
 		storeOrderRepo:   storeOrderRepo,
 		userRepo:         userRepo}
-}
-
-func toOrderInSessionResponse(order *domain.StoreOrder) *response.AdminOrderInSessionResponse {
-	return &response.AdminOrderInSessionResponse{
-		ID:          order.ID,
-		StoreID:     order.StoreID,
-		StoreName:   order.StoreName,
-		Status:      order.Status,
-		SubmittedAt: order.SubmittedAt,
-		CreatedAt:   order.CreatedAt,
-	}
-}
-
-func toOrderResponse(order *domain.StoreOrder) *response.OrderResponse {
-	return &response.OrderResponse{
-		ID:        order.ID,
-		StoreID:   order.StoreID,
-		StoreName: order.StoreName,
-		Status:    order.Status,
-		SessionID: order.SessionID,
-	}
 }
 
 func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.AdminOrderInSessionResponse, error) {
@@ -132,15 +113,21 @@ func (a *adminOrderService) GetAllPaginatedSessions(params request.OrderSearchPa
 func (a *adminOrderService) GetStoreWithOutOrder(sessionID uint) (*response.StoreWithoutOrderResponse, error) {
 	stores, err := a.userRepo.FindByRoleAndActive("store", true)
 	if err != nil {
-		return nil, domain.ErrDatabase
+		return nil, fmt.Errorf("%w: failed to fetch data: %v", domain.ErrDatabase, err)
 	}
 	session, err := a.orderSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session data: %v", domain.ErrDatabase, err)
 	}
 	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrOrderNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, err)
 	}
 	confirmedOrder := make(map[uint]bool)
 	for _, order := range orders {

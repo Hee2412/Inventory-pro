@@ -7,6 +7,7 @@ import (
 	"Inventory-pro/internal/repository"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"math"
 	"time"
 )
@@ -41,42 +42,18 @@ func NewStoreOrderService(
 	}
 }
 
-func toOrderItemResponse(items []*domain.OrderItems) []response.OrderItemResponse {
-	result := make([]response.OrderItemResponse, 0)
-	for _, item := range items {
-		result = append(result, response.OrderItemResponse{
-			ID:          item.ID,
-			OrderID:     item.OrderID,
-			ProductID:   item.ProductID,
-			ProductName: item.ProductName,
-			ProductCode: item.ProductCode,
-			Quantity:    item.Quantity,
-		})
-	}
-	return result
-}
-
-func toStoreOrderResponse(order *domain.StoreOrder) *response.StoreOrderResponse {
-	return &response.StoreOrderResponse{
-		ID:          order.ID,
-		SessionID:   order.SessionID,
-		StoreID:     order.StoreID,
-		Status:      order.Status,
-		SubmittedAt: order.SubmittedAt,
-		ApprovedAt:  order.ApproveAt,
-		CreatedAt:   order.CreatedAt,
-	}
-}
-
 func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
 	//call session
 	session, err := s.orderSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, session.ID)
 	}
 	//check session status
 	if session.Status == "CLOSED" {
-		return nil, domain.ErrSessionClosed
+		return nil, fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
 	//check deadline
 	if time.Now().After(session.Deadline) {
@@ -92,7 +69,7 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 			order.Status = "UNSUBMITTED_EXPIRED"
 			_ = s.storeOrderRepo.Update(order)
 		}
-		return nil, domain.ErrSessionClosed
+		return nil, fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
 
 	//check condition get or create order
@@ -105,7 +82,7 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 		}
 		err = s.storeOrderRepo.Create(order)
 		if err != nil {
-			return nil, domain.ErrDatabase
+			return nil, fmt.Errorf("%w: failed to store order: %v", domain.ErrDatabase, err)
 		}
 	}
 	items, _ := s.storeOrderItemRepo.FindByOrderId(order.ID)
@@ -120,15 +97,21 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 	//find order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
-		return domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
 	}
 	//check session
 	session, err := s.orderSessionRepo.FindById(order.SessionID)
 	if err != nil {
-		return domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrSessionNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, session.ID)
 	}
 	if session.Status == "CLOSED" {
-		return domain.ErrSessionClosed
+		return fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
 	if time.Now().After(session.Deadline) {
 		if order.Status == "DRAFT" {
@@ -189,16 +172,22 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 	return nil
 }
 
-func (s *storeOrderService) GetOrderDetail(OrderID uint) (*response.StoreOrderDetailResponse, error) {
+func (s *storeOrderService) GetOrderDetail(orderID uint) (*response.StoreOrderDetailResponse, error) {
 	//Find Order
-	order, err := s.storeOrderRepo.FindById(OrderID)
+	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
-		return nil, errors.New("order not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
 	}
 	//Check item
-	items, err := s.storeOrderItemRepo.FindByOrderId(OrderID)
+	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch items in order: %v", domain.ErrDatabase, orderID)
 	}
 	//transfer orderItem to response
 	result := &response.StoreOrderDetailResponse{
@@ -236,17 +225,23 @@ func (s *storeOrderService) GetAllPaginatedOrders(params request.OrderSearchPara
 	return result, total, nil
 }
 
-func (s *storeOrderService) UpdateStatus(OrderID uint) (*domain.StoreOrder, error) {
-	order, err := s.storeOrderRepo.FindById(OrderID)
+func (s *storeOrderService) UpdateStatus(orderID uint) (*domain.StoreOrder, error) {
+	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
-		return nil, errors.New("order not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
 	}
 	session, err := s.orderSessionRepo.FindById(order.SessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, session.ID)
 	}
 	if session.Status == "CLOSE" {
-		return nil, errors.New("session is close")
+		return nil, fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
 	now := time.Now()
 	if order.Status == "DRAFT" {
@@ -259,7 +254,7 @@ func (s *storeOrderService) UpdateStatus(OrderID uint) (*domain.StoreOrder, erro
 	}
 	err = s.storeOrderRepo.Update(order)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: update failed: %v", domain.ErrDatabase, err)
 	}
 	return order, nil
 }

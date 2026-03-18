@@ -6,6 +6,8 @@ import (
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
 	"errors"
+	"fmt"
+	"gorm.io/gorm"
 )
 
 type ProductService interface {
@@ -29,25 +31,12 @@ func NewProductService(repo repository.ProductRepository) ProductService {
 	return &productService{productRepo: repo}
 }
 
-func toProductResponse(product *domain.Product) *response.ProductResponse {
-	return &response.ProductResponse{
-		ID:          product.ID,
-		ProductName: product.ProductName,
-		ProductCode: product.ProductCode,
-		Unit:        product.Unit,
-		MOQ:         product.MOQ,
-		OM:          product.OM,
-		Type:        product.Type,
-		OrderCycle:  product.OrderCycle,
-		AuditCycle:  product.AuditCycle,
-		IsActive:    product.IsActive,
-	}
-}
-
 func (p *productService) FindActiveProducts() ([]*response.ProductResponse, error) {
 	products, err := p.productRepo.FindActiveProducts()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrProductNotFound
+		}
 	}
 	var result []*response.ProductResponse
 	for _, product := range products {
@@ -58,7 +47,10 @@ func (p *productService) FindActiveProducts() ([]*response.ProductResponse, erro
 func (p *productService) GetAllProducts() ([]*response.ProductResponse, error) {
 	product, err := p.productRepo.FindAll()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrProductNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, err)
 	}
 	var products []*response.ProductResponse
 	for _, product := range product {
@@ -70,7 +62,10 @@ func (p *productService) GetAllProducts() ([]*response.ProductResponse, error) {
 func (p *productService) GetProductById(productId uint) (*response.ProductResponse, error) {
 	product, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrProductNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
 	result := toProductResponse(product)
 	return result, nil
@@ -89,7 +84,7 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 	}
 	err := p.productRepo.Create(newProduct)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: failed to create product: %v", domain.ErrInternalServer, err)
 	}
 	result := toProductResponse(newProduct)
 	return result, nil
@@ -98,7 +93,10 @@ func (p *productService) CreateProduct(req request.CreateProductRequest) (*respo
 func (p *productService) UpdateProduct(productId uint, req request.UpdateProductRequest) error {
 	product, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return errors.New("product not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrProductNotFound
+		}
+		return fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
 	if req.ProductName != nil {
 		product.ProductName = *req.ProductName
@@ -124,47 +122,79 @@ func (p *productService) UpdateProduct(productId uint, req request.UpdateProduct
 	if req.IsActive != nil {
 		product.IsActive = *req.IsActive
 	}
-	return p.productRepo.Update(product)
+	err = p.productRepo.Update(product)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update product: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (p *productService) DeactivateProduct(productId uint) error {
 	product, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return errors.New("product not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrProductNotFound
+		}
+		return fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
 	if product.IsActive == false {
-		return errors.New("product is not active")
+		return fmt.Errorf("%w: product is inactive", domain.ErrInvalidInput)
 	}
 	product.IsActive = false
-	return p.productRepo.Update(product)
+	err = p.productRepo.Update(product)
+	if err != nil {
+		return fmt.Errorf("%w: failed to deactivate product: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (p *productService) ActivateProduct(productId uint) error {
 	product, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return errors.New("product not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrProductNotFound
+		}
+		return fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
 	if product.IsActive == true {
-		return errors.New("product is active")
+		return fmt.Errorf("%w: product is active", domain.ErrInvalidInput)
 	}
 	product.IsActive = true
-	return p.productRepo.Update(product)
+	err = p.productRepo.Update(product)
+	if err != nil {
+		return fmt.Errorf("%w: failed to activate product: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (p *productService) DeleteProduct(productId uint) error {
 	_, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return errors.New("product not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrProductNotFound
+		}
+		return fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
-	return p.productRepo.Delete(productId)
+	err = p.productRepo.Delete(productId)
+	if err != nil {
+		return fmt.Errorf("%w: failed to delete product: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (p *productService) HardDeleteProduct(productId uint) error {
 	_, err := p.productRepo.FindById(productId)
 	if err != nil {
-		return errors.New("product not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrProductNotFound
+		}
+		return fmt.Errorf("%w: failed to get product: %v", domain.ErrDatabase, productId)
 	}
-	return p.productRepo.HardDelete(productId)
+	err = p.productRepo.HardDelete(productId)
+	if err != nil {
+		return fmt.Errorf("%w: failed to delete product: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (p *productService) GetAllProductsPaginated(params request.ProductSearchParams) ([]*response.ProductResponse, int64, error) {

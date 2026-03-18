@@ -20,7 +20,7 @@ func NewProductHandler(productHandler service.ProductService) *ProductHandler {
 func (p *ProductHandler) GetAllProducts(c *gin.Context) {
 	products, err := p.productHandler.FindActiveProducts()
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, products)
@@ -31,7 +31,7 @@ func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 	//check request
 	var params request.ProductSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if params.Page <= 0 {
@@ -42,7 +42,7 @@ func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 	}
 	products, total, err := p.productHandler.GetAllProductsPaginated(params)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	paginationResponse := pagination.NewResponse(products, params.Page, params.Limit, total)
@@ -53,12 +53,12 @@ func (p *ProductHandler) GetAllProductsForAdmin(c *gin.Context) {
 func (p *ProductHandler) GetProductById(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	product, err := p.productHandler.GetProductById(id)
 	if err != nil {
-		response.NotFound(c, "Product not found")
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, product)
@@ -68,12 +68,12 @@ func (p *ProductHandler) GetProductById(c *gin.Context) {
 func (p *ProductHandler) CreateProduct(c *gin.Context) {
 	var req request.CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	data, err := p.productHandler.CreateProduct(req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, data)
@@ -83,16 +83,16 @@ func (p *ProductHandler) CreateProduct(c *gin.Context) {
 func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 	var req request.UpdateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if err = p.productHandler.UpdateProduct(id, req); err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Product updated")
@@ -102,11 +102,11 @@ func (p *ProductHandler) UpdateProduct(c *gin.Context) {
 func (p *ProductHandler) DeactivateProduct(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if err = p.productHandler.DeactivateProduct(id); err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Product deactivated")
@@ -116,11 +116,11 @@ func (p *ProductHandler) DeactivateProduct(c *gin.Context) {
 func (p *ProductHandler) ActivateProduct(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if err = p.productHandler.ActivateProduct(id); err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Product activated")
@@ -130,11 +130,11 @@ func (p *ProductHandler) ActivateProduct(c *gin.Context) {
 func (p *ProductHandler) DeleteProduct(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if err = p.productHandler.DeleteProduct(id); err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Product deleted")
@@ -144,11 +144,11 @@ func (p *ProductHandler) DeleteProduct(c *gin.Context) {
 func (p *ProductHandler) HardDeleteProduct(c *gin.Context) {
 	id, err := getIDParam(c, "id")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if err = p.productHandler.HardDeleteProduct(id); err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Product deleted")

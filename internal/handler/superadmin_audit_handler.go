@@ -20,13 +20,13 @@ func (s *SuperadminAuditHandler) GetAllReportsInSession(c *gin.Context) {
 	//get sessionID from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	// call service
 	result, err := s.service.GetAllReportsInSession(sessionID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, result)
@@ -37,18 +37,18 @@ func (s *SuperadminAuditHandler) GetReportDetail(c *gin.Context) {
 	//get sessionID/storeId from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	result, err := s.service.GetReportDetail(sessionID, storeID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, result)
@@ -59,13 +59,13 @@ func (s *SuperadminAuditHandler) GetAuditSummary(c *gin.Context) {
 	//get sessionID from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	result, err := s.service.GetAuditSummary(sessionID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, result)
@@ -76,25 +76,24 @@ func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 	//get sessionID/storeID from URL
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//get adminID from JWT
-	userID, exists := c.Get("userId")
-	if !exists {
-		response.Unauthorized(c, "Invalid token")
+	adminID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
 		return
 	}
-	adminID := userID.(uint)
 	//call service
 	err = s.service.ApproveStoreReport(storeID, sessionID, adminID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Report approved")
@@ -105,33 +104,31 @@ func (s *SuperadminAuditHandler) DeclineStoreReport(c *gin.Context) {
 	//get sessionID/storeID from URL
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//get adminID from JWT
-	userID, exists := c.Get("userId")
-	if !exists {
-		response.Unauthorized(c, "Invalid token")
+	adminID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
 		return
 	}
-	adminID := userID.(uint)
 	//var reason
 	var req request.DeclineReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	err = s.service.DeclineStoreReport(storeID, sessionID, req.Reason, adminID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
-
 	response.Message(c, "Report declined")
 }

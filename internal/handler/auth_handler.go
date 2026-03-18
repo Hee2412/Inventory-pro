@@ -19,13 +19,13 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 	var req request.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 
 	token, user, err := handler.authService.Login(req.Username, req.Password)
 	if err != nil {
-		response.Unauthorized(c, "Invalid token")
+		response.HandleError(c, err)
 		return
 	}
 
@@ -44,20 +44,19 @@ func (handler *AuthHandler) Login(c *gin.Context) {
 func (handler *AuthHandler) Register(c *gin.Context) {
 	var req request.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
-	id, exists := c.Get("userId")
-	if !exists {
-		response.BadRequest(c, "user id not found")
+	creatorID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
 		return
 	}
-	creatorID := id.(uint)
 	creatorRol, _ := c.Get("role")
 	roleStr, _ := creatorRol.(string)
-	err := handler.authService.Register(&creatorID, roleStr, req)
+	err = handler.authService.Register(&creatorID, roleStr, req)
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Created(c, "Register successfully")
@@ -65,15 +64,14 @@ func (handler *AuthHandler) Register(c *gin.Context) {
 
 // GetProfile GET /api/me
 func (handler *AuthHandler) GetProfile(c *gin.Context) {
-	id, exists := c.Get("userId")
-	if !exists {
-		response.Unauthorized(c, "Invalid token")
+	userID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
 		return
 	}
-	userId := id.(uint)
-	user, err := handler.authService.GetProfile(userId)
+	user, err := handler.authService.GetProfile(userID)
 	if err != nil {
-		response.NotFound(c, "User not found")
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, user)

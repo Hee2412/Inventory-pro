@@ -21,12 +21,12 @@ func (a *AdminOrderHandler) GetAllOrderInSession(c *gin.Context) {
 	//get sessionID
 	sessionId, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	orders, err := a.service.GetAllOrderInSession(sessionId)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, orders)
@@ -36,12 +36,12 @@ func (a *AdminOrderHandler) GetAllOrderInSession(c *gin.Context) {
 func (a *AdminOrderHandler) ApproveOrder(c *gin.Context) {
 	orderId, err := getIDParam(c, "orderId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	err = a.service.ApproveOrder(orderId)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Order approved successfully")
@@ -52,19 +52,19 @@ func (a *AdminOrderHandler) DeclineOrder(c *gin.Context) {
 	//get orderID
 	orderId, err := getIDParam(c, "orderId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//var request pull out reason
 	var req request.DeclineOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	err = a.service.DeclineOrder(orderId, req.Reason)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Message(c, "Order declined successfully")
@@ -74,7 +74,7 @@ func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
 	//check request
 	var params request.OrderSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if params.Page <= 0 {
@@ -85,7 +85,7 @@ func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
 	}
 	orders, total, err := a.service.GetAllPaginatedSessions(params)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	paginatedResponse := pagination.NewResponse(orders, params.Page, params.Limit, total)

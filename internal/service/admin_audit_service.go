@@ -4,7 +4,9 @@ import (
 	"Inventory-pro/internal/domain"
 	"Inventory-pro/internal/dto/response"
 	"Inventory-pro/internal/repository"
+	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -65,7 +67,10 @@ func (s *superAdminAuditService) GetAllReportsInSession(sessionID uint) ([]respo
 	// check session
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, err)
 	}
 	//get all reports
 	reports, err := s.storeAuditRepo.FindByAuditSessionID(session.ID)
@@ -96,7 +101,10 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 	//get session info
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, err)
 	}
 	//get items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
@@ -115,11 +123,17 @@ func (s *superAdminAuditService) GetReportDetail(sessionID uint, storeID uint) (
 func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.AuditSummaryResponse, error) {
 	reports, err := s.storeAuditRepo.FindByAuditSessionID(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch reports: %v", domain.ErrDatabase, err)
 	}
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, err)
 	}
 
 	//create mapping, group items by store
@@ -233,15 +247,18 @@ func (s *superAdminAuditService) DeclineStoreReport(storeID uint, sessionID uint
 func (s *superAdminAuditService) GetIncompleteAudit(sessionID uint) (*response.AuditTrackingResponse, error) {
 	stores, err := s.userRepo.FindByRoleAndActive("store", true)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", domain.ErrDatabase, err)
+		return nil, fmt.Errorf("%w: failed to fetch data %v", domain.ErrDatabase, err)
 	}
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
-		return nil, domain.ErrSessionNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, err)
 	}
 	allReports, err := s.storeAuditRepo.FindByAuditSessionID(sessionID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", domain.ErrInternalServer, err)
+		return nil, fmt.Errorf("%w: failed to fetch data%v", domain.ErrInternalServer, err)
 	}
 	reportMap := make(map[uint][]*domain.StoreAuditReport)
 	for _, r := range allReports {

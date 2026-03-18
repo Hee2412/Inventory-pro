@@ -7,6 +7,7 @@ import (
 	"Inventory-pro/internal/repository"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"strings"
 )
 
@@ -36,21 +37,9 @@ func NewOrderSessionService(
 		orderSessionProductRepo: sessionProductRepo}
 }
 
-func toOrderSessionResponse(order *domain.OrderSession) *response.OrderSessionResponse {
-	return &response.OrderSessionResponse{
-		ID:         order.ID,
-		Title:      order.Title,
-		OrderCycle: order.OrderCycle,
-		Status:     order.Status,
-		Deadline:   order.Deadline,
-		DeliveryAt: order.DeliveryDate,
-		CreatedAt:  order.CreatedAt,
-	}
-}
-
 func (o *orderSessionService) CreateSession(req request.CreateOrderSessionRequest, createdBy uint) (*response.OrderSessionResponse, error) {
 	if req.Deadline.After(req.DeliveryDate) {
-		return nil, errors.New("delivery date is in the past")
+		return nil, fmt.Errorf("%w: invalid delivery date", domain.ErrInvalidInput)
 	}
 	title := req.Title
 	if title == "" {
@@ -68,7 +57,7 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 	}
 	err := o.orderSessionRepo.Create(newOrderSession)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: failed to create order session: %v", domain.ErrDatabase, err)
 	}
 	result := toOrderSessionResponse(newOrderSession)
 	return result, nil
@@ -77,7 +66,7 @@ func (o *orderSessionService) CreateSession(req request.CreateOrderSessionReques
 func (o *orderSessionService) GetAllSessions(params request.SessionSearchParams) ([]*response.OrderSessionResponse, int64, error) {
 	sessions, total, err := o.orderSessionRepo.FindAllPaginated(params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("%w: failed to find sessions: %v", domain.ErrDatabase, err)
 	}
 	result := make([]*response.OrderSessionResponse, 0, len(sessions))
 	for _, session := range sessions {
@@ -90,7 +79,10 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 	//check session
 	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
-		return nil, errors.New("session not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get session: %v", domain.ErrDatabase, sessionId)
 	}
 	//check product in session
 	sessionProduct, err := o.orderSessionProductRepo.FindBySessionId(sessionId)
@@ -119,10 +111,13 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 func (o *orderSessionService) AddProductToSession(req request.AddProductToSessionRequest) (*response.AddProductResponse, error) {
 	session, err := o.orderSessionRepo.FindById(req.SessionID)
 	if err != nil {
-		return nil, errors.New("session not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get session: %v", domain.ErrDatabase, session.ID)
 	}
 	if session.Status != "OPEN" {
-		return nil, errors.New("session is closed")
+		return nil, fmt.Errorf("%w: cannot add product from a closed session", domain.ErrSessionClosed)
 	}
 
 	var errs []string
@@ -147,7 +142,7 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 	if len(sessionProduct) > 0 {
 		err := o.orderSessionProductRepo.Create(sessionProduct...)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: failed to add product to session: %v", domain.ErrDatabase, err)
 		}
 	}
 	return &response.AddProductResponse{
@@ -160,30 +155,43 @@ func (o *orderSessionService) AddProductToSession(req request.AddProductToSessio
 func (o *orderSessionService) RemoveProductFromSession(sessionId uint, productId uint) error {
 	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
-		return errors.New("session not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrSessionNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, sessionId)
 	}
 	if session.Status != "OPEN" {
-		return errors.New("session is closed")
-	}
-	_, err = o.productRepo.FindById(productId)
-	if err != nil {
-		return errors.New("product not found")
+		return fmt.Errorf("%w: cannot remove product from a closed session", domain.ErrSessionClosed)
 	}
 	sessionProduct, err := o.orderSessionProductRepo.FindBySessionAndProduct(sessionId, productId)
 	if err != nil {
-		return errors.New("product not found in session")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("%w: product is not assigned to this session", domain.ErrNotFound)
+		}
+		return fmt.Errorf("%w: failed to verify session product: %v", domain.ErrDatabase, err)
 	}
-	return o.orderSessionProductRepo.Delete(sessionProduct.ID)
+	err = o.orderSessionProductRepo.Delete(sessionProduct.ID)
+	if err != nil {
+		return fmt.Errorf("%w: failed to remove product from session: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (o *orderSessionService) CloseSession(sessionId uint) error {
 	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
-		return errors.New("session not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrSessionNotFound
+		}
+		return fmt.Errorf("%w: failed to get session: %v", domain.ErrDatabase, sessionId)
 	}
 	if session.Status != "OPEN" {
-		return errors.New("session is closed")
+		return fmt.Errorf("%w: session closed", domain.ErrSessionClosed)
 	}
 	session.Status = "CLOSED"
-	return o.orderSessionRepo.Update(session)
+	err = o.orderSessionRepo.Update(session)
+	if err != nil {
+		return fmt.Errorf("%w failed to update session", domain.ErrInternalServer)
+	}
+	return nil
 }

@@ -3,17 +3,35 @@ package domain
 import "errors"
 
 var (
-	ErrNotFound       = errors.New("the requested resource was not found")
-	ErrInvalidInput   = errors.New("provided input data is invalid")
-	ErrUnauthorized   = errors.New("you do not have permission to perform this action")
-	ErrInternalServer = errors.New("an internal system error occurred")
-	ErrDatabase       = errors.New("a database error occurred")
+	// General
+	ErrNotFound      = errors.New("resource not found")
+	ErrAlreadyExists = errors.New("resource already exists")
+	ErrInvalidInput  = errors.New("invalid input")
+	ErrUnauthorized  = errors.New("unauthorized")
+	ErrForbidden     = errors.New("forbidden")
 
-	ErrSessionNotFound  = errors.New("audit session does not exist")
-	ErrSessionClosed    = errors.New("this audit session has already been closed")
-	ErrStoreNotAssigned = errors.New("this store is not assigned to the current audit session")
+	// User
+	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserInactive       = errors.New("user is inactive")
 
-	ErrStoreInactive = errors.New("this store is currently inactive")
-	ErrUserNotFound  = errors.New("user account not found")
-	ErrInvalidRole   = errors.New("user does not have the required role for this operation")
+	// Product
+	ErrProductNotFound = errors.New("product not found")
+
+	// Session
+	ErrSessionNotFound = errors.New("session not found")
+	ErrSessionClosed   = errors.New("session is closed")
+
+	// Order
+	ErrOrderNotFound = errors.New("order not found")
+	ErrEmptyOrder    = errors.New("cannot submit empty order")
+	ErrOrderClosed   = errors.New("cannot update closed order")
+
+	// Audit
+	ErrAuditNotFound = errors.New("audit not found")
+	ErrAuditExpired  = errors.New("audit session expired")
+
+	// Database
+	ErrDatabase       = errors.New("database error")
+	ErrInternalServer = errors.New("internal server error")
 )

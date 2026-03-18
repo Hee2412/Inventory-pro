@@ -7,7 +7,8 @@ import (
 	"Inventory-pro/internal/repository"
 	"Inventory-pro/pkg/password"
 	"errors"
-	"time"
+	"fmt"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -29,32 +30,17 @@ type userService struct {
 func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{userRepo: repo}
 }
-func toUserResponse(user *domain.User) *response.UserResponse {
-	var lastLogin string
-	if user.LastLogin != nil {
-		lastLogin = user.LastLogin.Format(time.DateTime)
-	} else {
-		lastLogin = ""
-	}
-	return &response.UserResponse{
-		ID:        user.ID,
-		Username:  user.Username,
-		Role:      user.Role,
-		StoreName: user.StoreName,
-		StoreCode: user.StoreCode,
-		IsActive:  user.IsActive,
-		CreateAt:  user.CreatedAt,
-		LastLogin: lastLogin,
-		DeletedAt: user.DeletedAt,
-	}
-}
+
 func (s *userService) GetAllUsers() ([]*response.UserResponse, error) {
-	user, err := s.userRepo.FindAll()
+	users, err := s.userRepo.FindAll()
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get user: %v", domain.ErrDatabase, err)
 	}
 	var result []*response.UserResponse
-	for _, user := range user {
+	for _, user := range users {
 		result = append(result, toUserResponse(user))
 	}
 	return result, nil
@@ -62,7 +48,10 @@ func (s *userService) GetAllUsers() ([]*response.UserResponse, error) {
 func (s *userService) GetUserById(userId uint) (*response.UserResponse, error) {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to get user: %v", domain.ErrDatabase, err)
 	}
 	result := toUserResponse(user)
 	return result, nil
@@ -70,7 +59,10 @@ func (s *userService) GetUserById(userId uint) (*response.UserResponse, error) {
 func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) error {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return fmt.Errorf("%w: failed to find user: %v", domain.ErrDatabase, err)
 	}
 	if req.StoreName != nil {
 		user.StoreName = *req.StoreName
@@ -81,7 +73,7 @@ func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) err
 	if req.Password != nil {
 		hashedPassword, err := password.HashPassword(*req.Password)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: failed to hash password: %v", domain.ErrInternalServer, err)
 		}
 		user.Password = hashedPassword
 	}
@@ -91,27 +83,41 @@ func (s *userService) UpdateUser(userId uint, req request.UpdateUserRequest) err
 	if req.Role != nil {
 		user.Role = *req.Role
 	}
-	return s.userRepo.Update(user)
+	err = s.userRepo.Update(user)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update user: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 func (s *userService) DeactivateUser(userId uint) error {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return fmt.Errorf("%w: failed to find user", domain.ErrDatabase)
 	}
 	if user.IsActive != true {
-		return errors.New("user is not active")
+		return fmt.Errorf("%w: user is inactive", domain.ErrUserInactive)
 	}
 	user.IsActive = false
-	return s.userRepo.Update(user)
+	err = s.userRepo.Update(user)
+	if err != nil {
+		return fmt.Errorf("%w: failed to update user: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (s *userService) ActivateUser(userId uint) error {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return fmt.Errorf("%w: failed to find user", domain.ErrDatabase)
 	}
 	if user.IsActive == true {
-		return errors.New("user is active")
+		return fmt.Errorf("%w: user is already active", domain.ErrInternalServer)
 	}
 	user.IsActive = true
 	return s.userRepo.Update(user)
@@ -120,34 +126,48 @@ func (s *userService) ActivateUser(userId uint) error {
 func (s *userService) DeleteUser(userId uint) error {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return fmt.Errorf("%w: failed to find user", domain.ErrDatabase)
 	}
 	if user.DeletedAt.Valid == true {
-		return errors.New("user is already deleted")
+		return fmt.Errorf("%v: user is already deleted", domain.ErrInvalidInput)
 	}
 	user.IsActive = false
 	err = s.userRepo.Update(user)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: failed to update user: %v", domain.ErrDatabase, err)
 	}
-	return s.userRepo.Delete(userId)
+	err = s.userRepo.Delete(userId)
+	if err != nil {
+		return fmt.Errorf("%w: failed to delete user: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (s *userService) HardDeleteUser(userId uint) error {
 	user, err := s.userRepo.FindById(userId)
 	if err != nil {
-		return errors.New("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return fmt.Errorf("%w: failed to find user: %v", domain.ErrDatabase, err)
 	}
 	if user.DeletedAt.Valid == false {
-		return errors.New("this user is not deleted yet")
+		return fmt.Errorf("%v: soft delete user first", domain.ErrInvalidInput)
 	}
-	return s.userRepo.HardDelete(userId)
+	err = s.userRepo.HardDelete(userId)
+	if err != nil {
+		return fmt.Errorf("%w: failed to delete user: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }
 
 func (s *userService) SearchAndFilter(params request.UserSearchParams) ([]*response.UserResponse, int64, error) {
 	users, total, err := s.userRepo.SearchAndFilter(params)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("%w: failed to fetch user data %v", domain.ErrDatabase, err)
 	}
 	result := make([]*response.UserResponse, 0, len(users))
 	for _, user := range users {

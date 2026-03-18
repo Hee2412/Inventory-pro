@@ -21,21 +21,19 @@ func (h *OrderSessionHandler) CreateSession(c *gin.Context) {
 	//bind request
 	var req request.CreateOrderSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//pull out createdBy from JWT
-	userID, exists := c.Get("userId")
-	if !exists {
-		response.Unauthorized(c, "Invalid token")
+	createdBy, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
 		return
 	}
-	createdBy := userID.(uint)
-
 	//call service
 	result, err := h.service.CreateSession(req, createdBy)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//response
@@ -47,7 +45,7 @@ func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
 	//check request
 	var params request.SessionSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	if params.Page <= 0 {
@@ -59,7 +57,7 @@ func (h *OrderSessionHandler) GetAllSessions(c *gin.Context) {
 	//call service
 	sessions, total, err := h.service.GetAllSessions(params)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//create response
@@ -72,13 +70,13 @@ func (h *OrderSessionHandler) GetSessionById(c *gin.Context) {
 	//get id param
 	id, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	session, err := h.service.GetSessionById(id)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//response
@@ -90,13 +88,13 @@ func (h *OrderSessionHandler) AddProductToSession(c *gin.Context) {
 	//bind request
 	var req request.AddProductToSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	result, err := h.service.AddProductToSession(req)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//response
@@ -108,19 +106,19 @@ func (h *OrderSessionHandler) RemoveProductFromSession(c *gin.Context) {
 	//get sessionId from url
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//get productId from url
 	productID, err := getIDParam(c, "productId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	err = h.service.RemoveProductFromSession(sessionID, productID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//response
@@ -132,13 +130,13 @@ func (h *OrderSessionHandler) CloseSession(c *gin.Context) {
 	//get sessionID from url
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	//call service
 	err = h.service.CloseSession(sessionID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		response.HandleError(c, err)
 		return
 	}
 	response.Success(c, "Session closed")
