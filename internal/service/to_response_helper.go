@@ -126,3 +126,52 @@ func toAuditReportItemResponse(items []*domain.StoreAuditReport) []*response.Aud
 	}
 	return result
 }
+
+func toInventoryResponse(inv *domain.StoreInventory) *response.InventoryResponse {
+	resp := &response.InventoryResponse{
+		ID:        inv.ID,
+		StoreID:   inv.StoreID,
+		ProductID: inv.ProductID,
+		Quantity:  inv.Quantity,
+		UpdatedBy: inv.UpdatedBy,
+		UpdatedAt: inv.UpdatedAt,
+	}
+	if inv.Store != nil {
+		resp.StoreName = inv.Store.StoreName
+	}
+	if inv.Product != nil {
+		resp.ProductName = inv.Product.ProductName
+		resp.ProductCode = inv.Product.ProductCode
+	}
+	return resp
+}
+
+func toTransferOrderResponse(order *domain.TransferOrder) *response.TransferOrderResponse {
+	resp := &response.TransferOrderResponse{
+		ID:           order.ID,
+		FromStoreID:  order.FromStoreID,
+		ToStoreID:    order.ToStoreID,
+		Status:       order.Status,
+		Note:         order.Note,
+		CreatedBy:    order.CreatedBy,
+		CreatedAt:    order.CreatedAt,
+		ApprovedAt:   order.ApprovedAt,
+		CancelledAt:  order.CancelledAt,
+		CancelReason: order.CancelReason,
+	}
+	return resp
+}
+
+func toTransferItemResponse(items []*domain.TransferOrderItem) []response.TransferItemResponse {
+	result := make([]response.TransferItemResponse, 0, len(items))
+	for _, item := range items {
+		result = append(result, response.TransferItemResponse{
+			ID:          item.ID,
+			ProductID:   item.ProductID,
+			ProductName: item.ProductName,
+			ProductCode: item.ProductCode,
+			Quantity:    item.Quantity,
+		})
+	}
+	return result
+}

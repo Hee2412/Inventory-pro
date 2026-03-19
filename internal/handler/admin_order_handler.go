@@ -91,3 +91,36 @@ func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
 	paginatedResponse := pagination.NewResponse(orders, params.Page, params.Limit, total)
 	response.Success(c, paginatedResponse)
 }
+
+// DeliverOrder POST /api/admin/orders/:orderId/deliver
+func (a *AdminOrderHandler) DeliverOrder(c *gin.Context) {
+	orderId, err := getIDParam(c, "orderId")
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	if err = a.service.DeliverOrder(orderId); err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	response.Message(c, "Order marked as delivered")
+}
+
+// RedeliverOrder POST /api/admin/orders/:orderId/redeliver
+func (a *AdminOrderHandler) RedeliverOrder(c *gin.Context) {
+	orderId, err := getIDParam(c, "orderId")
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	var req request.RedeliverRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	if err = a.service.RedeliverOrder(orderId, req); err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	response.Message(c, "Order redelivered with updated quantities")
+}

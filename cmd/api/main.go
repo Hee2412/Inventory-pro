@@ -26,11 +26,23 @@ func main() {
 		&domain.StoreOrder{}, &domain.OrderSession{},
 		&domain.OrderSessionProduct{}, &domain.OrderItems{},
 		&domain.AuditSession{}, &domain.StoreAuditReport{},
+		&domain.StoreInventory{}, &domain.TransferOrder{},
+		&domain.TransferOrderItem{},
 	)
 	if err != nil {
-		log.Fatal("Failed to auto migrate database", err)
+		log.Fatal("Failed to auto migrate database:", err)
 	}
-	log.Printf("Database migrated")
+	log.Println("Database tables migrated")
+
+	err = db.Exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_store_product 
+    ON store_inventories(store_id, product_id)
+`).Error
+	if err != nil {
+		log.Printf("⚠️  Failed to create index idx_store_product: %v", err)
+		// Don't fatal - index might already exist
+	}
+	log.Println("Database indexes created")
 
 	var count int64
 	db.Model(&domain.User{}).Where("username = ?", "superadmin").Count(&count)
@@ -54,6 +66,7 @@ func main() {
 	storeOrderItemRepo := repository.NewStoreOrderItems(db)
 	auditSessionRepo := repository.NewAuditSessionRepository(db)
 	storeAuditRepo := repository.NewStoreAuditRepository(db)
+	inventoryRepo := repository.NewStoreInventoryRepository(db)
 
 	authService := service.NewAuthService(userRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
@@ -64,9 +77,9 @@ func main() {
 
 	orderSessionService := service.NewOrderSessionService(orderSessionRepo, productRepo, orderSessionProductRepo)
 	orderSessionHandler := handler.NewOrderSessionHandler(orderSessionService)
-	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo, productRepo)
+	storeOrderService := service.NewStoreOrderService(storeOrderRepo, orderSessionRepo, storeOrderItemRepo, productRepo, inventoryRepo)
 	storeOrderHandler := handler.NewStoreOrderHandler(storeOrderService)
-	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo, userRepo)
+	adminOrderService := service.NewAdminOrderService(orderSessionRepo, storeOrderRepo, userRepo, storeOrderItemRepo)
 	adminOrderHandler := handler.NewAdminOrderHandler(adminOrderService)
 
 	auditSessionService := service.NewAuditSessionService(auditSessionRepo, storeAuditRepo, userRepo, productRepo)
@@ -75,6 +88,14 @@ func main() {
 	storeAuditHandler := handler.NewStoreAuditHandler(storeAuditService)
 	superadminAuditService := service.NewSuperAdminAuditService(auditSessionRepo, storeAuditRepo, userRepo)
 	superadminAuditHandler := handler.NewSuperadminAuditHandler(superadminAuditService)
+
+	inventoryService := service.NewInventoryService(inventoryRepo, userRepo, productRepo)
+	inventoryHandler := handler.NewInventoryHandler(inventoryService)
+
+	transferRepo := repository.NewTransferOrderRepository(db)
+	transferItemRepo := repository.NewTransferOrderItemRepository(db)
+	transferService := service.NewTransferService(transferRepo, transferItemRepo, inventoryRepo, userRepo, productRepo)
+	transferHandler := handler.NewTransferHandler(transferService)
 
 	router := gin.Default()
 	router.Use(middleware.LoggingMiddleware())
@@ -106,10 +127,21 @@ func main() {
 		storeProtected.GET("/orders/:orderId", storeOrderHandler.GetOrderDetail)
 		storeProtected.GET("/orders", storeOrderHandler.GetMyOrder)
 		storeProtected.PUT("/orders/:orderId", storeOrderHandler.UpdateStatus)
+		storeProtected.POST("/orders/:orderId/receive", storeOrderHandler.ConfirmReceived)
+		storeProtected.POST("/orders/:orderId/reject", storeOrderHandler.RejectDelivery)
 		//audit routes
 		storeProtected.PUT("/audit-sessions/:sessionId/items", storeAuditHandler.UpdateAuditItem)
 		storeProtected.GET("/audit-reports", storeAuditHandler.GetMyAuditReport)
 		storeProtected.GET("/audit-sessions/:sessionId/report", storeAuditHandler.GetAuditReport)
+		//transfer routes
+		storeTransfer := storeProtected.Group("/transfers")
+		{
+			storeTransfer.POST("", transferHandler.CreateTransfer)
+			storeTransfer.GET("", transferHandler.GetMyTransfers)
+			storeTransfer.GET("/:transferId", transferHandler.GetTransferDetail)
+			storeTransfer.POST("/:transferId/approve", transferHandler.ApproveTransfer)
+			storeTransfer.POST("/:transferId/cancel", transferHandler.CancelTransfer)
+		}
 	}
 
 	adminRoutes := protected.Group("/admin")
@@ -154,9 +186,28 @@ func main() {
 			adminAudit.PATCH("/:id/close", auditSessionHandler.CloseAuditSession)
 			adminAudit.PUT("/:id", auditSessionHandler.UpdateAuditSession)
 		}
+		adminTransfer := adminRoutes.Group("/transfers")
+		{
+			adminTransfer.POST("", transferHandler.AdminCreateTransfer)
+			adminTransfer.GET("", transferHandler.GetAllTransfers) // ?page=&limit=&status=
+			adminTransfer.GET("/:transferId", transferHandler.GetTransferDetail)
+			adminTransfer.POST("/:transferId/approve", transferHandler.ApproveTransfer)
+			adminTransfer.POST("/:transferId/cancel", transferHandler.CancelTransfer)
+		}
 		adminRoutes.GET("/orders", adminOrderHandler.GetAllOrders)
 		adminRoutes.POST("/orders/:orderId/approve", adminOrderHandler.ApproveOrder)
 		adminRoutes.POST("/orders/:orderId/decline", adminOrderHandler.DeclineOrder)
+		adminRoutes.POST("/orders/:orderId/deliver", adminOrderHandler.DeliverOrder)
+		adminRoutes.POST("/orders/:orderId/redeliver", adminOrderHandler.RedeliverOrder)
+
+		adminInventory := adminRoutes.Group("/inventory")
+		{
+			adminInventory.GET("", inventoryHandler.GetAllInventory)
+			adminInventory.GET("/product/:productId", inventoryHandler.GetProductInventoryAcrossStore)
+			adminInventory.PUT("", inventoryHandler.UpdateInventory)
+			adminInventory.POST("/adjust", inventoryHandler.AdjustInventory)
+			adminInventory.GET("/stores/:storeId", inventoryHandler.GetStoreInventory)
+		}
 	}
 
 	superAdminRoutes := protected.Group("/superadmin")

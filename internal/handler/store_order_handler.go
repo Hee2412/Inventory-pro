@@ -110,3 +110,47 @@ func (s *StoreOrderHandler) UpdateStatus(c *gin.Context) {
 	}
 	response.Message(c, msg)
 }
+
+// ConfirmReceived POST /api/store/orders/:orderId/receive
+func (s *StoreOrderHandler) ConfirmReceived(c *gin.Context) {
+	orderID, err := getIDParam(c, "orderId")
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	storeID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	result, err := s.service.ConfirmReceived(orderID, storeID)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
+// RejectDelivery POST /api/store/orders/:orderId/reject
+func (s *StoreOrderHandler) RejectDelivery(c *gin.Context) {
+	orderID, err := getIDParam(c, "orderId")
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	storeID, err := getUserID(c)
+	if err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	var req request.RejectDeliveryRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	if err = s.service.RejectDelivery(orderID, storeID, req.Reason); err != nil {
+		response.HandleError(c, err)
+		return
+	}
+	response.Message(c, "Delivery rejected - admin will be notified to redeliver")
+}

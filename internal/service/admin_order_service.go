@@ -17,22 +17,28 @@ type AdminOrderService interface {
 	DeclineOrder(orderId uint, reason string) error
 	GetAllPaginatedSessions(params request.OrderSearchParams) ([]*response.OrderResponse, int64, error)
 	GetStoreWithOutOrder(sessionID uint) (*response.StoreWithoutOrderResponse, error)
+	DeliverOrder(orderId uint) error
+	RedeliverOrder(orderId uint, req request.RedeliverRequest) error
 }
 
 type adminOrderService struct {
-	orderSessionRepo repository.OrderSessionRepository
-	storeOrderRepo   repository.StoreOrderRepository
-	userRepo         repository.UserRepository
+	orderSessionRepo   repository.OrderSessionRepository
+	storeOrderRepo     repository.StoreOrderRepository
+	userRepo           repository.UserRepository
+	storeOrderItemRepo repository.StoreOrderItemRepository
 }
 
 func NewAdminOrderService(
 	orderSessionRepo repository.OrderSessionRepository,
 	storeOrderRepo repository.StoreOrderRepository,
-	userRepo repository.UserRepository) AdminOrderService {
+	userRepo repository.UserRepository,
+	storeOrderItemRepo repository.StoreOrderItemRepository) AdminOrderService {
 	return &adminOrderService{
-		orderSessionRepo: orderSessionRepo,
-		storeOrderRepo:   storeOrderRepo,
-		userRepo:         userRepo}
+		orderSessionRepo:   orderSessionRepo,
+		storeOrderRepo:     storeOrderRepo,
+		userRepo:           userRepo,
+		storeOrderItemRepo: storeOrderItemRepo,
+	}
 }
 
 func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.AdminOrderInSessionResponse, error) {
@@ -150,4 +156,76 @@ func (a *adminOrderService) GetStoreWithOutOrder(sessionID uint) (*response.Stor
 		NotOrdered:        len(notConfirmedStores),
 		StoreWithoutOrder: notConfirmedStores,
 	}, nil
+}
+
+func (a *adminOrderService) DeliverOrder(orderId uint) error {
+	order, err := a.storeOrderRepo.FindById(orderId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderId)
+	}
+	//check order status "APPROVED" before create form
+	if order.Status != "APPROVED" {
+		return fmt.Errorf("%w: only APPROVED orders can be delivered, current: %s",
+			domain.ErrInvalidInput, order.Status)
+	}
+	now := time.Now()
+	order.Status = "DELIVERED"
+	order.ConfirmedAt = &now
+	err = a.storeOrderRepo.Update(order)
+	if err != nil {
+		return fmt.Errorf("%w: failed to deliver order: %v", domain.ErrDatabase, err)
+	}
+	return nil
+}
+
+func (a *adminOrderService) RedeliverOrder(orderId uint, req request.RedeliverRequest) error {
+	order, err := a.storeOrderRepo.FindById(orderId)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderId)
+	}
+	//only using when store has rejected delivery form
+	if order.Status != "REJECTED" {
+		return fmt.Errorf("%w: only REJECTED orders can be redelivered, current: %s",
+			domain.ErrInvalidInput, order.Status)
+	}
+
+	//delete old items
+	if err = a.storeOrderItemRepo.DeleteByOrderId(orderId); err != nil {
+		return fmt.Errorf("%w: failed to clear old items: %v", domain.ErrDatabase, err)
+	}
+
+	//create new order items with reality quantity
+	var newItems []*domain.OrderItems
+	for _, item := range req.Items {
+		if item.Quantity == 0 {
+			continue
+		}
+		newItems = append(newItems, &domain.OrderItems{
+			OrderID:   orderId,
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+		})
+	}
+	if len(newItems) == 0 {
+		return fmt.Errorf("%w: redeliver must have at least one item with quantity > 0", domain.ErrInvalidInput)
+	}
+	if err = a.storeOrderItemRepo.Create(newItems...); err != nil {
+		return fmt.Errorf("%w: failed to create new items: %v", domain.ErrDatabase, err)
+	}
+
+	//change status to delivered after this
+	now := time.Now()
+	order.Status = "DELIVERED"
+	order.ConfirmedAt = &now
+	order.Note = "" // clear reject reason
+	if err = a.storeOrderRepo.Update(order); err != nil {
+		return fmt.Errorf("%w: failed to update order status: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }

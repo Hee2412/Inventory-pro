@@ -19,6 +19,8 @@ type StoreOrderService interface {
 	GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error)
 	GetAllPaginatedOrders(params request.OrderSearchParams) ([]*response.StoreOrderResponse, int64, error)
 	UpdateStatus(OrderID uint) (*domain.StoreOrder, error)
+	ConfirmReceived(orderID uint, storeID uint) (*response.InventoryUpdateResponse, error)
+	RejectDelivery(orderID uint, storeID uint, reason string) error
 }
 
 type storeOrderService struct {
@@ -26,6 +28,7 @@ type storeOrderService struct {
 	orderSessionRepo   repository.OrderSessionRepository
 	storeOrderItemRepo repository.StoreOrderItemRepository
 	productRepo        repository.ProductRepository
+	inventoryRepo      repository.StoreInventoryRepository
 }
 
 func NewStoreOrderService(
@@ -33,12 +36,14 @@ func NewStoreOrderService(
 	orderSessionRepo repository.OrderSessionRepository,
 	storeOrderItemRepo repository.StoreOrderItemRepository,
 	productRepo repository.ProductRepository,
+	inventoryRepo repository.StoreInventoryRepository,
 ) StoreOrderService {
 	return &storeOrderService{
 		storeOrderRepo:     storeOrderRepo,
 		orderSessionRepo:   orderSessionRepo,
 		storeOrderItemRepo: storeOrderItemRepo,
 		productRepo:        productRepo,
+		inventoryRepo:      inventoryRepo,
 	}
 }
 
@@ -257,4 +262,94 @@ func (s *storeOrderService) UpdateStatus(orderID uint) (*domain.StoreOrder, erro
 		return nil, fmt.Errorf("%w: update failed: %v", domain.ErrDatabase, err)
 	}
 	return order, nil
+}
+
+func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*response.InventoryUpdateResponse, error) {
+	//Validate order
+	order, err := s.storeOrderRepo.FindById(orderID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
+	}
+	if order.StoreID != storeID {
+		return nil, fmt.Errorf("%w: you are not authorized to confirm this order", domain.ErrForbidden)
+	}
+	if order.Status != "DELIVERED" {
+		return nil, fmt.Errorf("%w: order must be DELIVERED before confirming receipt, current: %s",
+			domain.ErrInvalidInput, order.Status)
+	}
+
+	//get items in order
+	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to fetch order items: %v", domain.ErrDatabase, orderID)
+	}
+
+	//update items in inventory
+	var updatedItems []response.InventoryUpdatedItem
+	for _, item := range items {
+		product, err := s.productRepo.FindById(item.ProductID)
+		if err != nil {
+			continue
+		}
+
+		if err = s.inventoryRepo.AdjustQuantity(storeID, item.ProductID, item.Quantity, storeID); err != nil {
+			return nil, fmt.Errorf("%w: failed to adjust inventory for product %d: %v",
+				domain.ErrDatabase, item.ProductID, err)
+		}
+		//get items after updating for response
+		updated, err := s.inventoryRepo.FindByStoreAndProduct(storeID, item.ProductID)
+		if err != nil {
+			continue
+		}
+		updatedItems = append(updatedItems, response.InventoryUpdatedItem{
+			ProductID:   item.ProductID,
+			ProductName: product.ProductName,
+			AddedQty:    item.Quantity,
+			NewTotal:    updated.Quantity,
+		})
+	}
+
+	//update order status to "RECEIVED"
+	now := time.Now()
+	order.Status = "RECEIVED"
+	order.ReceivedAt = &now
+	if err = s.storeOrderRepo.Update(order); err != nil {
+		return nil, fmt.Errorf("%w: failed to update order status: %v", domain.ErrDatabase, err)
+	}
+	//return response
+	return &response.InventoryUpdateResponse{
+		OrderID: orderID,
+		StoreID: storeID,
+		Updated: len(updatedItems),
+		Items:   updatedItems,
+	}, nil
+}
+
+// RejectDelivery Store reject order if reality quantity is not match with system
+// admin received request -> create new product confirmation form
+func (s *storeOrderService) RejectDelivery(orderID uint, storeID uint, reason string) error {
+	//validate order
+	order, err := s.storeOrderRepo.FindById(orderID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
+	}
+	if order.StoreID != storeID {
+		return fmt.Errorf("%w: you are not authorized to reject this order", domain.ErrForbidden)
+	}
+	if order.Status != "DELIVERED" {
+		return fmt.Errorf("%w: only DELIVERED orders can be rejected, current: %s",
+			domain.ErrInvalidInput, order.Status)
+	}
+	order.Status = "REJECTED"
+	order.Note = reason
+	if err = s.storeOrderRepo.Update(order); err != nil {
+		return fmt.Errorf("%w: failed to update order status: %v", domain.ErrDatabase, err)
+	}
+	return nil
 }

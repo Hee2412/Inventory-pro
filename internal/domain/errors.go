@@ -34,4 +34,7 @@ var (
 	// Database
 	ErrDatabase       = errors.New("database error")
 	ErrInternalServer = errors.New("internal server error")
+
+	// Transfer
+	ErrTransferNotFound = errors.New("transfer not found")
 )

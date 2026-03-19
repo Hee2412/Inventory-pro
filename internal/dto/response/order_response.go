@@ -74,3 +74,45 @@ type StoreTrackingResponse struct {
 	StoreID   uint   `json:"store_id"`
 	StoreName string `json:"store_name"`
 }
+
+type InventoryUpdateResponse struct {
+	OrderID uint                   `json:"order_id"`
+	StoreID uint                   `json:"store_id"`
+	Updated int                    `json:"updated"`
+	Items   []InventoryUpdatedItem `json:"items"`
+}
+
+type InventoryUpdatedItem struct {
+	ProductID   uint    `json:"product_id"`
+	ProductName string  `json:"product_name"`
+	AddedQty    float64 `json:"added_qty"`
+	NewTotal    float64 `json:"new_total"`
+}
+
+type TransferOrderResponse struct {
+	ID            uint       `json:"id"`
+	FromStoreID   uint       `json:"from_store_id"`
+	FromStoreName string     `json:"from_store_name"`
+	ToStoreID     uint       `json:"to_store_id"`
+	ToStoreName   string     `json:"to_store_name"`
+	Status        string     `json:"status"`
+	Note          string     `json:"note"`
+	CreatedBy     uint       `json:"created_by"`
+	CreatedAt     time.Time  `json:"created_at"`
+	ApprovedAt    *time.Time `json:"approved_at,omitempty"`
+	CancelledAt   *time.Time `json:"cancelled_at,omitempty"`
+	CancelReason  string     `json:"cancel_reason,omitempty"`
+}
+
+type TransferOrderDetailResponse struct {
+	Order *TransferOrderResponse `json:"order"`
+	Items []TransferItemResponse `json:"items"`
+}
+
+type TransferItemResponse struct {
+	ID          uint    `json:"id"`
+	ProductID   uint    `json:"product_id"`
+	ProductName string  `json:"product_name"`
+	ProductCode string  `json:"product_code"`
+	Quantity    float64 `json:"quantity"`
+}

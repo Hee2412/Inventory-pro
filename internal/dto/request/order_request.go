@@ -61,3 +61,48 @@ func (p *SessionSearchParams) SetDefaults() {
 		p.Limit = 20
 	}
 }
+
+type RejectDeliveryRequest struct {
+	Reason string `json:"reason" binding:"required,min=5"`
+}
+
+type RedeliverRequest struct {
+	Items []RedeliverItem `json:"items" binding:"required,min=1"`
+}
+
+type RedeliverItem struct {
+	ProductID uint    `json:"product_id" binding:"required"`
+	Quantity  float64 `json:"quantity" binding:"min=0"`
+}
+
+type CreateTransferRequest struct {
+	ToStoreID uint                 `json:"to_store_id" binding:"required"`
+	Note      string               `json:"note"`
+	Items     []CreateTransferItem `json:"items" binding:"required,min=1"`
+}
+
+type CreateTransferItem struct {
+	ProductID uint    `json:"product_id" binding:"required"`
+	Quantity  float64 `json:"quantity" binding:"required,min=0.01"`
+}
+
+type CancelTransferRequest struct {
+	Reason string `json:"reason" binding:"required,min=5"`
+}
+
+type TransferSearchParams struct {
+	StoreID   *uint  `form:"store_id"`
+	Status    string `form:"status"`
+	Direction string `form:"direction"` // "in" | "out" | "" (all)
+	Page      int    `form:"page" binding:"omitempty,min=1"`
+	Limit     int    `form:"limit" binding:"omitempty,min=1,max=100"`
+}
+
+func (p *TransferSearchParams) SetDefaults() {
+	if p.Page == 0 {
+		p.Page = 1
+	}
+	if p.Limit == 0 {
+		p.Limit = 20
+	}
+}
