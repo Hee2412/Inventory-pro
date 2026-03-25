@@ -17,20 +17,17 @@ func NewStoreOrderHandler(storeOrderHandler service.StoreOrderService) *StoreOrd
 
 // GetOrCreateOrder GET    /api/store/sessions/:sessionId/order
 func (s *StoreOrderHandler) GetOrCreateOrder(c *gin.Context) {
-	//get sessionID
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//get storeId
 	userID, exists := c.Get("userId")
 	if !exists {
 		response.HandleError(c, err)
 		return
 	}
 	storeID := userID.(uint)
-	//call service
 	result, err := s.service.GetOrCreateOrder(sessionID, storeID)
 	if err != nil {
 		response.HandleError(c, err)
@@ -46,13 +43,11 @@ func (s *StoreOrderHandler) UpdateOrder(c *gin.Context) {
 		response.HandleError(c, err)
 		return
 	}
-	//get orderId
 	orderID, err := getIDParam(c, "orderId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	err = s.service.UpdateOrder(orderID, req)
 	if err != nil {
 		response.HandleError(c, err)
@@ -68,7 +63,6 @@ func (s *StoreOrderHandler) GetOrderDetail(c *gin.Context) {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	result, err := s.service.GetOrderDetail(orderID)
 	if err != nil {
 		response.HandleError(c, err)

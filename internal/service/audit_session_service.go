@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -20,7 +19,6 @@ type AuditSessionService interface {
 	RemoveProductFromAudit(sessionID uint, productID uint) error
 	CloseAuditSession(auditSessionID uint) error
 	UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error
-	AutoCloseExpiredSession() error
 	GetAllSessionsPaginated(params request.AuditSessionSearchParams) ([]*response.AuditSessionResponse, int64, error)
 }
 
@@ -42,21 +40,6 @@ func NewAuditSessionService(
 		userRepo:         userRepo,
 		productRepo:      productRepo,
 	}
-}
-
-func (a *auditSessionService) AutoCloseExpiredSession() error {
-	sessions, _ := a.auditSessionRepo.FindByStatus("OPEN")
-	for _, session := range sessions {
-		if time.Now().After(session.EndDate) {
-			session.Status = "CLOSED"
-			err := a.auditSessionRepo.Update(session)
-			if err != nil {
-				return err
-			}
-			log.Printf("AutoClose expired session %d:", session.ID)
-		}
-	}
-	return nil
 }
 
 func (a *auditSessionService) CreateAuditSession(req request.CreateAuditSessionRequest, createdBy uint) (*response.AuditSessionResponse, error) {
@@ -95,7 +78,6 @@ func (a *auditSessionService) GetAllAuditSessions() ([]*response.AuditSessionRes
 }
 
 func (a *auditSessionService) GetAuditSessionByID(sessionID uint) (*response.AuditSessionDetailsResponse, error) {
-	//var sessionId
 	session, err := a.auditSessionRepo.FindById(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -103,7 +85,6 @@ func (a *auditSessionService) GetAuditSessionByID(sessionID uint) (*response.Aud
 		}
 		return nil, fmt.Errorf("%w: failed to fetch session data: %v", domain.ErrDatabase, err)
 	}
-	//check store audit in session
 	reports, err := a.storeAuditRepo.FindByAuditSessionID(sessionID)
 	if err != nil {
 		return &response.AuditSessionDetailsResponse{
@@ -111,7 +92,6 @@ func (a *auditSessionService) GetAuditSessionByID(sessionID uint) (*response.Aud
 			Report:      []response.StoreAuditSummaryResponse{},
 		}, nil
 	}
-	//mapping
 	storeMap := make(map[uint]response.StoreAuditSummaryResponse)
 	for _, r := range reports {
 		if _, exist := storeMap[r.StoreID]; !exist {
@@ -126,7 +106,6 @@ func (a *auditSessionService) GetAuditSessionByID(sessionID uint) (*response.Aud
 			}
 		}
 	}
-	//convert map to slice
 	var storeResponse []response.StoreAuditSummaryResponse
 	for _, store := range storeMap {
 		storeResponse = append(storeResponse, store)
@@ -138,7 +117,6 @@ func (a *auditSessionService) GetAuditSessionByID(sessionID uint) (*response.Aud
 }
 
 func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditRequest) (*response.AddProductResponse, error) {
-	//check session/status
 	session, err := a.auditSessionRepo.FindById(req.AuditSessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -149,7 +127,6 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 	if session.Status != "OPEN" {
 		return nil, errors.New("session is not OPEN")
 	}
-	//get all stores FindByRole
 	stores, err := a.userRepo.FindByRole("store")
 	if err != nil {
 		return nil, err
@@ -159,24 +136,19 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 	var errs []string
 	var reports []*domain.StoreAuditReport
 
-	//for each product -> create report/StoreAuditReport for each store
 	for _, productID := range req.ProductID {
-		//check product exists
 		product, err := a.productRepo.FindById(productID)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("product %d not found", productID))
 			continue
 		}
-		//create report item for each store
 
 		for _, store := range stores {
-			//check if report exists
 			existing, _ := a.storeAuditRepo.FindBySessionStoreAndProduct(
 				session.ID,
 				store.ID,
 				productID)
 			if existing != nil {
-				//it does -> add item to report
 				errs = append(errs,
 					fmt.Sprintf("product %d already exists for store %d",
 						productID, store.ID))
@@ -210,7 +182,6 @@ func (a *auditSessionService) AddProductToAudit(req request.AddProductToAuditReq
 }
 
 func (a *auditSessionService) RemoveProductFromAudit(sessionID uint, productID uint) error {
-	//check session
 	session, err := a.auditSessionRepo.FindById(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -218,17 +189,14 @@ func (a *auditSessionService) RemoveProductFromAudit(sessionID uint, productID u
 		}
 		return fmt.Errorf("%w: failed to fetch session data: %v", domain.ErrDatabase, err)
 	}
-	//check status
 	if session.Status == "CLOSED" {
 		return fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
-	//find all reports that have productID in session
 	reports, err := a.storeAuditRepo.FindBySessionAndProduct(
 		sessionID, productID)
 	if err != nil || len(reports) == 0 {
 		return fmt.Errorf("%w: product is not asigned in this session: %v", domain.ErrDatabase, err)
 	}
-	//delete report in session
 	for _, report := range reports {
 		if report.Status != "DRAFT" {
 			return fmt.Errorf("%w: report %s is not DRAFT", domain.ErrDatabase, report.ProductName)
@@ -261,7 +229,6 @@ func (a *auditSessionService) CloseAuditSession(auditSessionID uint) error {
 }
 
 func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.UpdateAuditSessionRequest) error {
-	//check session
 	session, err := a.auditSessionRepo.FindById(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -272,7 +239,6 @@ func (a *auditSessionService) UpdateAuditSession(sessionID uint, req request.Upd
 	if session.Status == "CLOSED" {
 		return fmt.Errorf("%w: session is already closed", domain.ErrSessionClosed)
 	}
-	//call service
 	if req.Title != nil {
 		session.Title = *req.Title
 	}

@@ -84,7 +84,6 @@ func (s *inventoryService) GetStoreInventory(storeID uint) ([]*response.Inventor
 }
 
 func (s *inventoryService) UpdateInventory(storeID uint, req request.UpdateInventoryRequest, updatedBy uint) error {
-	// Validate store exists
 	_, err := s.storeRepo.FindById(storeID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -93,7 +92,6 @@ func (s *inventoryService) UpdateInventory(storeID uint, req request.UpdateInven
 		return fmt.Errorf("%w: failed to find store: %v", domain.ErrDatabase, err)
 	}
 
-	// Validate product exists
 	_, err = s.productRepo.FindById(req.ProductID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -105,7 +103,6 @@ func (s *inventoryService) UpdateInventory(storeID uint, req request.UpdateInven
 		return fmt.Errorf("%w: quantity cannot be negative <0", domain.ErrInvalidInput)
 	}
 
-	// Update or create inventory
 	inventory := &domain.StoreInventory{
 		StoreID:   storeID,
 		ProductID: req.ProductID,

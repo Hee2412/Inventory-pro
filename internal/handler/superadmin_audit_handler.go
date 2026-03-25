@@ -17,13 +17,11 @@ func NewSuperadminAuditHandler(superadminAuditHandler service.SuperAdminAuditSer
 
 // GetAllReportsInSession GET /api/superadmin/audit-sessions/:sessionId/reports
 func (s *SuperadminAuditHandler) GetAllReportsInSession(c *gin.Context) {
-	//get sessionID from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	// call service
 	result, err := s.service.GetAllReportsInSession(sessionID)
 	if err != nil {
 		response.HandleError(c, err)
@@ -34,7 +32,6 @@ func (s *SuperadminAuditHandler) GetAllReportsInSession(c *gin.Context) {
 
 // GetReportDetail GET /api/superadmin/audit-sessions/:sessionId/stores/:storeId
 func (s *SuperadminAuditHandler) GetReportDetail(c *gin.Context) {
-	//get sessionID/storeId from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -45,7 +42,6 @@ func (s *SuperadminAuditHandler) GetReportDetail(c *gin.Context) {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	result, err := s.service.GetReportDetail(sessionID, storeID)
 	if err != nil {
 		response.HandleError(c, err)
@@ -56,13 +52,11 @@ func (s *SuperadminAuditHandler) GetReportDetail(c *gin.Context) {
 
 // GetAuditSummary GET /api/superadmin/audit-sessions/:sessionId/summary
 func (s *SuperadminAuditHandler) GetAuditSummary(c *gin.Context) {
-	//get sessionID from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	result, err := s.service.GetAuditSummary(sessionID)
 	if err != nil {
 		response.HandleError(c, err)
@@ -73,7 +67,6 @@ func (s *SuperadminAuditHandler) GetAuditSummary(c *gin.Context) {
 
 // ApproveStoreReport POST /api/superadmin/audit-sessions/:sessionId/stores/:storeId/approve
 func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
-	//get sessionID/storeID from URL
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -84,13 +77,11 @@ func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 		response.HandleError(c, err)
 		return
 	}
-	//get adminID from JWT
 	adminID, err := getUserID(c)
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	err = s.service.ApproveStoreReport(storeID, sessionID, adminID)
 	if err != nil {
 		response.HandleError(c, err)
@@ -101,7 +92,6 @@ func (s *SuperadminAuditHandler) ApproveStoreReport(c *gin.Context) {
 
 // DeclineStoreReport POST /api/superadmin/audit-sessions/:sessionId/stores/:storeId/decline
 func (s *SuperadminAuditHandler) DeclineStoreReport(c *gin.Context) {
-	//get sessionID/storeID from URL
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -112,19 +102,16 @@ func (s *SuperadminAuditHandler) DeclineStoreReport(c *gin.Context) {
 		response.HandleError(c, err)
 		return
 	}
-	//get adminID from JWT
 	adminID, err := getUserID(c)
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//var reason
 	var req request.DeclineReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	err = s.service.DeclineStoreReport(storeID, sessionID, req.Reason, adminID)
 	if err != nil {
 		response.HandleError(c, err)

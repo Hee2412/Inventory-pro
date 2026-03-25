@@ -18,7 +18,6 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 
 // GetAllUsers GET /api/admin/users
 func (uh *UserHandler) GetAllUsers(c *gin.Context) {
-	//check request
 	var params request.UserSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
 		response.HandleError(c, err)

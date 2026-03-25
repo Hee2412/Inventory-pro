@@ -48,7 +48,6 @@ func NewStoreOrderService(
 }
 
 func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*response.StoreOrderDetailResponse, error) {
-	//call session
 	session, err := s.orderSessionRepo.FindById(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -56,11 +55,9 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 		}
 		return nil, fmt.Errorf("%w: failed to fetch session: %v", domain.ErrDatabase, session.ID)
 	}
-	//check session status
 	if session.Status == "CLOSED" {
 		return nil, fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
-	//check deadline
 	if time.Now().After(session.Deadline) {
 		order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
 		if err != nil {
@@ -77,7 +74,6 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 		return nil, fmt.Errorf("%w: session is closed", domain.ErrSessionClosed)
 	}
 
-	//check condition get or create order
 	order, err := s.storeOrderRepo.FindByStoreAndSession(sessionID, storeID)
 	if err != nil {
 		order = &domain.StoreOrder{
@@ -99,7 +95,6 @@ func (s *storeOrderService) GetOrCreateOrder(sessionID uint, storeID uint) (*res
 }
 
 func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderItemRequest) error {
-	//find order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -107,7 +102,6 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		}
 		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
 	}
-	//check session
 	session, err := s.orderSessionRepo.FindById(order.SessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -125,8 +119,6 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		}
 		return fmt.Errorf("%w: deadline exceeded at %v", domain.ErrSessionClosed, session.Deadline)
 	}
-
-	//var order items
 	var newItems []*domain.OrderItems
 	for _, item := range req.Items {
 		if item.Quantity == 0 {
@@ -136,12 +128,10 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 		if err != nil {
 			continue
 		}
-		//check moq
 		if item.Quantity < product.MOQ {
 			return fmt.Errorf("product %s: quantity %.0f is less than MOQ %.0f",
 				product.ProductName, item.Quantity, product.MOQ)
 		}
-		//check om
 		if product.OM > 0 {
 			if math.Mod(item.Quantity, product.OM) != 0 {
 				return fmt.Errorf("product %s: quantity must be multiple of %.0f (e.g., %.0f, %.0f, %.0f...)",
@@ -178,7 +168,6 @@ func (s *storeOrderService) UpdateOrder(orderID uint, req request.UpdateOrderIte
 }
 
 func (s *storeOrderService) GetOrderDetail(orderID uint) (*response.StoreOrderDetailResponse, error) {
-	//Find Order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -186,7 +175,6 @@ func (s *storeOrderService) GetOrderDetail(orderID uint) (*response.StoreOrderDe
 		}
 		return nil, fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderID)
 	}
-	//Check item
 	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -194,27 +182,22 @@ func (s *storeOrderService) GetOrderDetail(orderID uint) (*response.StoreOrderDe
 		}
 		return nil, fmt.Errorf("%w: failed to fetch items in order: %v", domain.ErrDatabase, orderID)
 	}
-	//transfer orderItem to response
 	result := &response.StoreOrderDetailResponse{
 		Order: toStoreOrderResponse(order),
 		Items: toOrderItemResponse(items),
 	}
-	//return result
 	return result, nil
 }
 
 func (s *storeOrderService) GetMyOrder(storeID uint) ([]*response.StoreOrderResponse, error) {
-	//findOrder By storeID
 	orders, err := s.storeOrderRepo.FindByStoreID(storeID)
 	if err != nil {
 		return make([]*response.StoreOrderResponse, 0), nil
 	}
-	//transfer to storeOrderResponse
 	result := make([]*response.StoreOrderResponse, 0)
 	for _, order := range orders {
 		result = append(result, toStoreOrderResponse(order))
 	}
-	//return result
 	return result, nil
 }
 
@@ -265,7 +248,6 @@ func (s *storeOrderService) UpdateStatus(orderID uint) (*domain.StoreOrder, erro
 }
 
 func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*response.InventoryUpdateResponse, error) {
-	//Validate order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -280,14 +262,10 @@ func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*respon
 		return nil, fmt.Errorf("%w: order must be DELIVERED before confirming receipt, current: %s",
 			domain.ErrInvalidInput, order.Status)
 	}
-
-	//get items in order
 	items, err := s.storeOrderItemRepo.FindByOrderId(orderID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to fetch order items: %v", domain.ErrDatabase, orderID)
 	}
-
-	//update items in inventory
 	var updatedItems []response.InventoryUpdatedItem
 	for _, item := range items {
 		product, err := s.productRepo.FindById(item.ProductID)
@@ -299,7 +277,6 @@ func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*respon
 			return nil, fmt.Errorf("%w: failed to adjust inventory for product %d: %v",
 				domain.ErrDatabase, item.ProductID, err)
 		}
-		//get items after updating for response
 		updated, err := s.inventoryRepo.FindByStoreAndProduct(storeID, item.ProductID)
 		if err != nil {
 			continue
@@ -311,15 +288,12 @@ func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*respon
 			NewTotal:    updated.Quantity,
 		})
 	}
-
-	//update order status to "RECEIVED"
 	now := time.Now()
 	order.Status = "RECEIVED"
 	order.ReceivedAt = &now
 	if err = s.storeOrderRepo.Update(order); err != nil {
 		return nil, fmt.Errorf("%w: failed to update order status: %v", domain.ErrDatabase, err)
 	}
-	//return response
 	return &response.InventoryUpdateResponse{
 		OrderID: orderID,
 		StoreID: storeID,
@@ -331,7 +305,6 @@ func (s *storeOrderService) ConfirmReceived(orderID uint, storeID uint) (*respon
 // RejectDelivery Store reject order if reality quantity is not match with system
 // admin received request -> create new product confirmation form
 func (s *storeOrderService) RejectDelivery(orderID uint, storeID uint, reason string) error {
-	//validate order
 	order, err := s.storeOrderRepo.FindById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

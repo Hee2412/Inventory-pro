@@ -39,8 +39,7 @@ func main() {
     ON store_inventories(store_id, product_id)
 `).Error
 	if err != nil {
-		log.Printf("⚠️  Failed to create index idx_store_product: %v", err)
-		// Don't fatal - index might already exist
+		log.Printf("Failed to create index idx_store_product: %v", err)
 	}
 	log.Println("Database indexes created")
 
@@ -55,7 +54,7 @@ func main() {
 			IsActive: true,
 		}
 		db.Create(&superAdmin)
-		log.Println("✅ Superadmin created!")
+		log.Println("Superadmin created!")
 	}
 
 	userRepo := repository.NewUserRepository(db)

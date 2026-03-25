@@ -18,19 +18,16 @@ func NewAuditSessionHandler(auditSessionService service.AuditSessionService) *Au
 
 // CreateAuditSession POST api/admin/audit-sessions
 func (a *AuditSessionHandler) CreateAuditSession(c *gin.Context) {
-	//var request
 	var req request.CreateAuditSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//get userID from JWT
 	createdBy, err := getUserID(c)
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	result, err := a.service.CreateAuditSession(req, createdBy)
 	if err != nil {
 		response.HandleError(c, err)
@@ -78,7 +75,6 @@ func (a *AuditSessionHandler) GetAuditSessionByID(c *gin.Context) {
 
 // AddProductToAudit POST /api/superadmin/audit-sessions/products
 func (a *AuditSessionHandler) AddProductToAudit(c *gin.Context) {
-	//check request
 	var req request.AddProductToAuditRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)
@@ -94,7 +90,6 @@ func (a *AuditSessionHandler) AddProductToAudit(c *gin.Context) {
 
 // RemoveProductFromAudit DELETE /api/superadmin/audit-sessions/:sessionId/products/:productId
 func (a *AuditSessionHandler) RemoveProductFromAudit(c *gin.Context) {
-	//get sessionID/productID from URL
 	sessionID, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -115,7 +110,6 @@ func (a *AuditSessionHandler) RemoveProductFromAudit(c *gin.Context) {
 
 // CloseAuditSession PATCH /api/superadmin/audit-sessions/:id/close
 func (a *AuditSessionHandler) CloseAuditSession(c *gin.Context) {
-	//get id from url
 	id, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -131,19 +125,16 @@ func (a *AuditSessionHandler) CloseAuditSession(c *gin.Context) {
 
 // UpdateAuditSession PUT /api/superadmin/audit-sessions/:id
 func (a *AuditSessionHandler) UpdateAuditSession(c *gin.Context) {
-	//get id from URL
 	id, err := getIDParam(c, "id")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//bind request
 	var req request.UpdateAuditSessionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	err = a.service.UpdateAuditSession(id, req)
 	if err != nil {
 		response.HandleError(c, err)

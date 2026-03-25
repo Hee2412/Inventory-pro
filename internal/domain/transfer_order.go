@@ -15,6 +15,7 @@ type TransferOrder struct {
 	ApprovedBy   *uint      `json:"approved_by,omitempty"`
 	CancelledAt  *time.Time `json:"cancelled_at,omitempty"`
 	CancelReason string     `json:"cancel_reason,omitempty"`
+	CancelBy     *uint      `json:"cancel_by,omitempty"`
 }
 
 func (TransferOrder) TableName() string {

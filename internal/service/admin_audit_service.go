@@ -192,7 +192,6 @@ func (s *superAdminAuditService) GetAuditSummary(sessionID uint) (*response.Audi
 }
 
 func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint, adminID uint) error {
-	//get all items
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
 		return fmt.Errorf("%w: failed to fetch store audit for store %d: %v", domain.ErrDatabase, storeID, err)
@@ -204,7 +203,6 @@ func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint
 	if status != "DRAFT" {
 		return fmt.Errorf("%w: only reports in DRAFT status can be approved", domain.ErrInvalidInput)
 	}
-
 	updateData := map[string]interface{}{
 		"status":      "APPROVED",
 		"approved_at": time.Now(),
@@ -218,7 +216,6 @@ func (s *superAdminAuditService) ApproveStoreReport(storeID uint, sessionID uint
 }
 
 func (s *superAdminAuditService) DeclineStoreReport(storeID uint, sessionID uint, reason string, adminID uint) error {
-	//get all items
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	if err != nil {
 		return fmt.Errorf("%w: failed to fetch store audit for store %d: %v", domain.ErrDatabase, storeID, err)

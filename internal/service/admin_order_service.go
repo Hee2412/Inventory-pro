@@ -42,12 +42,10 @@ func NewAdminOrderService(
 }
 
 func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.AdminOrderInSessionResponse, error) {
-	//var sessionID
 	_, err := a.orderSessionRepo.FindById(sessionID)
 	if err != nil {
 		return nil, domain.ErrNotFound
 	}
-	//mapping to orderSessionResponse
 	orders, err := a.storeOrderRepo.FindBySessionID(sessionID)
 	if err != nil {
 		return make([]*response.AdminOrderInSessionResponse, 0), nil
@@ -60,19 +58,16 @@ func (a *adminOrderService) GetAllOrderInSession(sessionID uint) ([]*response.Ad
 }
 
 func (a *adminOrderService) ApproveOrder(orderId uint) error {
-	//Find orderByID
 	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
 		return domain.ErrNotFound
 	}
-	//Check status ("Submitted")
 	if order.Status != "SUBMITTED" && order.Status != "NO_ORDER" {
 		return fmt.Errorf("%w: cannot approve order with current status: %s", domain.ErrInvalidInput, order.Status)
 	}
 	if order.Status == "UNSUBMITTED_EXPIRED" {
 		return fmt.Errorf("%w: this order has expired without store interaction", domain.ErrInvalidInput)
 	}
-	//Change status ("Approved")
 	order.Status = "APPROVED"
 	now := time.Now()
 	order.ApproveAt = &now
@@ -84,19 +79,15 @@ func (a *adminOrderService) ApproveOrder(orderId uint) error {
 }
 
 func (a *adminOrderService) DeclineOrder(orderId uint, reason string) error {
-	//Find orderByID
 	order, err := a.storeOrderRepo.FindById(orderId)
 	if err != nil {
 		return domain.ErrNotFound
 	}
-	//Check status ("Submitted")
 	if order.Status == "DRAFT" {
 		return fmt.Errorf("%w: only reports in SUBMITTED status can be decline", domain.ErrInvalidInput)
 	}
-	//Change status ("Declined")
 	order.Status = "DECLINED"
 	order.Note = reason
-	//Save/Update
 	err = a.storeOrderRepo.Update(order)
 	if err != nil {
 		return fmt.Errorf("%w: failed to update status: %v", domain.ErrDatabase, err)
@@ -166,7 +157,6 @@ func (a *adminOrderService) DeliverOrder(orderId uint) error {
 		}
 		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderId)
 	}
-	//check order status "APPROVED" before create form
 	if order.Status != "APPROVED" {
 		return fmt.Errorf("%w: only APPROVED orders can be delivered, current: %s",
 			domain.ErrInvalidInput, order.Status)
@@ -189,18 +179,15 @@ func (a *adminOrderService) RedeliverOrder(orderId uint, req request.RedeliverRe
 		}
 		return fmt.Errorf("%w: failed to fetch order: %v", domain.ErrDatabase, orderId)
 	}
-	//only using when store has rejected delivery form
 	if order.Status != "REJECTED" {
 		return fmt.Errorf("%w: only REJECTED orders can be redelivered, current: %s",
 			domain.ErrInvalidInput, order.Status)
 	}
 
-	//delete old items
 	if err = a.storeOrderItemRepo.DeleteByOrderId(orderId); err != nil {
 		return fmt.Errorf("%w: failed to clear old items: %v", domain.ErrDatabase, err)
 	}
 
-	//create new order items with reality quantity
 	var newItems []*domain.OrderItems
 	for _, item := range req.Items {
 		if item.Quantity == 0 {
@@ -219,11 +206,10 @@ func (a *adminOrderService) RedeliverOrder(orderId uint, req request.RedeliverRe
 		return fmt.Errorf("%w: failed to create new items: %v", domain.ErrDatabase, err)
 	}
 
-	//change status to delivered after this
 	now := time.Now()
 	order.Status = "DELIVERED"
 	order.ConfirmedAt = &now
-	order.Note = "" // clear reject reason
+	order.Note = ""
 	if err = a.storeOrderRepo.Update(order); err != nil {
 		return fmt.Errorf("%w: failed to update order status: %v", domain.ErrDatabase, err)
 	}

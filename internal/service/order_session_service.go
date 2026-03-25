@@ -76,7 +76,6 @@ func (o *orderSessionService) GetAllSessions(params request.SessionSearchParams)
 }
 
 func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSessionDetailResponse, error) {
-	//check session
 	session, err := o.orderSessionRepo.FindById(sessionId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -84,16 +83,13 @@ func (o *orderSessionService) GetSessionById(sessionId uint) (*response.OrderSes
 		}
 		return nil, fmt.Errorf("%w: failed to get session: %v", domain.ErrDatabase, sessionId)
 	}
-	//check product in session
 	sessionProduct, err := o.orderSessionProductRepo.FindBySessionId(sessionId)
 	if err != nil {
-		//create blank slice if nothing
 		return &response.OrderSessionDetailResponse{
 			Session:  toOrderSessionResponse(session),
 			Products: []*response.ProductResponse{},
 		}, nil
 	}
-	//mapping product to response
 	var products []*response.ProductResponse
 	for _, sp := range sessionProduct {
 		product, err := o.productRepo.FindById(sp.ProductID)

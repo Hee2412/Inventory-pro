@@ -109,9 +109,9 @@ func (h *TransferHandler) GetAllTransfers(c *gin.Context) {
 	response.Success(c, paginatedResponse)
 }
 
-// ApproveTransfer POST /api/store/transfers/:transferId/approve  (ToStore xác nhận)
+// ApproveTransfer POST /api/store/transfers/:transferId/approve  (ToStore)
 //
-//	POST /api/admin/transfers/:transferId/approve  (Admin xác nhận)
+//	POST /api/admin/transfers/:transferId/approve  (Admin)
 func (h *TransferHandler) ApproveTransfer(c *gin.Context) {
 	transferID, err := getIDParam(c, "transferId")
 	if err != nil {

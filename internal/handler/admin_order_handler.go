@@ -18,7 +18,6 @@ func NewAdminOrderHandler(adminOrderHandler service.AdminOrderService) *AdminOrd
 
 // GetAllOrderInSession GET    /api/admin/sessions/:sessionId/orders
 func (a *AdminOrderHandler) GetAllOrderInSession(c *gin.Context) {
-	//get sessionID
 	sessionId, err := getIDParam(c, "sessionId")
 	if err != nil {
 		response.HandleError(c, err)
@@ -49,19 +48,16 @@ func (a *AdminOrderHandler) ApproveOrder(c *gin.Context) {
 
 // DeclineOrder POST   /api/admin/orders/:orderId/decline
 func (a *AdminOrderHandler) DeclineOrder(c *gin.Context) {
-	//get orderID
 	orderId, err := getIDParam(c, "orderId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//var request pull out reason
 	var req request.DeclineOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//call service
 	err = a.service.DeclineOrder(orderId, req.Reason)
 	if err != nil {
 		response.HandleError(c, err)
@@ -71,7 +67,6 @@ func (a *AdminOrderHandler) DeclineOrder(c *gin.Context) {
 }
 
 func (a *AdminOrderHandler) GetAllOrders(c *gin.Context) {
-	//check request
 	var params request.OrderSearchParams
 	if err := c.ShouldBindQuery(&params); err != nil {
 		response.HandleError(c, err)

@@ -38,7 +38,6 @@ func NewStoreAuditService(
 
 // GetAuditReport GetOrCreateAuditReport Store get in session => found all products
 func (s *storeAuditService) GetAuditReport(sessionID uint, storeID uint) (*response.AuditReportItemDetailResponse, error) {
-	//check status session
 	session, err := s.auditSessionRepo.FindById(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -46,7 +45,6 @@ func (s *storeAuditService) GetAuditReport(sessionID uint, storeID uint) (*respo
 		}
 		return nil, fmt.Errorf("%w: failed to fetch session data: %v", domain.ErrDatabase, err)
 	}
-	//find items in session
 	items, err := s.storeAuditRepo.FindByAuditSessionAndStore(storeID, sessionID)
 	result := &response.AuditReportItemDetailResponse{
 		SessionTitle: session.Title,
@@ -99,7 +97,6 @@ func (s *storeAuditService) UpdateAuditItem(sessionID uint, storeID uint, req re
 }
 
 func (s *storeAuditService) GetMyAuditReports(storeID uint) ([]*response.AuditReportItemDetailResponse, error) {
-	//find reports by storeID
 	items, err := s.storeAuditRepo.FindByStoreId(storeID)
 	if err != nil {
 		return make([]*response.AuditReportItemDetailResponse, 0), err

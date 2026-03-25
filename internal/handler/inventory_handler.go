@@ -32,13 +32,11 @@ func (h *InventoryHandler) GetStoreInventory(c *gin.Context) {
 
 // UpdateInventory /api/inventory/admin/stores/:storeId
 func (h *InventoryHandler) UpdateInventory(c *gin.Context) {
-	//get id from url
 	storeID, err := getIDParam(c, "storeId")
 	if err != nil {
 		response.HandleError(c, err)
 		return
 	}
-	//var req
 	var req request.UpdateInventoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.HandleError(c, err)

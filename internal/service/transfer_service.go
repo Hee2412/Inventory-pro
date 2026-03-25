@@ -58,8 +58,6 @@ func (s *transferService) CreateTransfer(req request.CreateTransferRequest, crea
 		}
 		return nil, fmt.Errorf("%w: failed to validate store: %v", domain.ErrDatabase, err)
 	}
-
-	//create transfer order
 	order := &domain.TransferOrder{
 		FromStoreID: fromStoreID,
 		ToStoreID:   req.ToStoreID,
@@ -71,7 +69,6 @@ func (s *transferService) CreateTransfer(req request.CreateTransferRequest, crea
 		return nil, fmt.Errorf("%w: failed to create transfer: %v", domain.ErrDatabase, err)
 	}
 
-	//create items
 	var items []*domain.TransferOrderItem
 	for _, item := range req.Items {
 		product, err := s.productRepo.FindById(item.ProductID)
@@ -113,14 +110,11 @@ func (s *transferService) ApproveTransfer(transferID uint, approvedBy uint) (*re
 		return nil, fmt.Errorf("%w: failed to fetch transfer items: %v", domain.ErrDatabase, transferID)
 	}
 
-	// Update inventory for each item
 	for _, item := range items {
-		// Minus FromStore (delta -)
 		if err = s.inventoryRepo.AdjustQuantity(order.FromStoreID, item.ProductID, -item.Quantity, approvedBy); err != nil {
 			return nil, fmt.Errorf("%w: failed to deduct inventory from store %d for product %d: %v",
 				domain.ErrDatabase, order.FromStoreID, item.ProductID, err)
 		}
-		// Plus ToStore (delta +)
 		if err = s.inventoryRepo.AdjustQuantity(order.ToStoreID, item.ProductID, item.Quantity, approvedBy); err != nil {
 			return nil, fmt.Errorf("%w: failed to add inventory to store %d for product %d: %v",
 				domain.ErrDatabase, order.ToStoreID, item.ProductID, err)
@@ -138,7 +132,6 @@ func (s *transferService) ApproveTransfer(transferID uint, approvedBy uint) (*re
 	return s.buildDetailResponse(order, items)
 }
 
-// CancelTransfer
 func (s *transferService) CancelTransfer(transferID uint, cancelledBy uint, reason string) error {
 	order, err := s.transferRepo.FindById(transferID)
 	if err != nil {
@@ -155,6 +148,7 @@ func (s *transferService) CancelTransfer(transferID uint, cancelledBy uint, reas
 	order.Status = "CANCELLED"
 	order.CancelledAt = &now
 	order.CancelReason = reason
+	order.CancelBy = &cancelledBy
 	if err = s.transferRepo.Update(order); err != nil {
 		return fmt.Errorf("%w: failed to cancel transfer: %v", domain.ErrDatabase, err)
 	}
